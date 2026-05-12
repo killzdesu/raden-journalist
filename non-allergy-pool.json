@@ -1,0 +1,122 @@
+[
+    {
+        "journal": "New England Journal of Medicine",
+        "abbreviation": "NEJM",
+        "online_issn": "1533-4406"
+    },
+    {
+        "journal": "Nature Medicine",
+        "abbreviation": "Nat Med",
+        "online_issn": "1546-170X"
+    },
+    {
+        "journal": "The Lancet",
+        "abbreviation": "Lancet",
+        "online_issn": "1474-547X"
+    },
+    {
+        "journal": "JAMA",
+        "abbreviation": "JAMA",
+        "online_issn": "1538-3598"
+    },
+    {
+        "journal": "Immunity",
+        "abbreviation": "Immunity",
+        "online_issn": "1097-4180"
+    },
+    {
+        "journal": "Science Translational Medicine",
+        "abbreviation": "Sci Transl Med",
+        "online_issn": "1946-6242"
+    },
+    {
+        "journal": "Science Immunology",
+        "abbreviation": "Sci Immunol",
+        "online_issn": "2470-9468"
+    },
+    {
+        "journal": "Nature Immunology",
+        "abbreviation": "Nat Immunol",
+        "online_issn": "1529-2916"
+    },
+    {
+        "journal": "BMJ",
+        "abbreviation": "BMJ",
+        "online_issn": "1756-1833"
+    },
+    {
+        "journal": "Nature Communications",
+        "abbreviation": "Nat Commun",
+        "online_issn": "2041-1723"
+    },
+    {
+        "journal": "Journal of Experimental Medicine",
+        "abbreviation": "J Exp Med",
+        "online_issn": "1540-9538"
+    },
+    {
+        "journal": "JAMA Internal Medicine",
+        "abbreviation": "JAMA Intern Med",
+        "online_issn": "2168-6114"
+    },
+    {
+        "journal": "Journal of Clinical Investigation",
+        "abbreviation": "JCI",
+        "online_issn": "1558-8238"
+    },
+    {
+        "journal": "The Lancet Regional Health – Europe",
+        "abbreviation": "Lancet Reg Health",
+        "online_issn": "2666-7762"
+    },
+    {
+        "journal": "JAMA Dermatology",
+        "abbreviation": "JAMA Dermatol",
+        "online_issn": "2168-6084"
+    },
+    {
+        "journal": "eClinicalMedicine",
+        "abbreviation": "eClinMed",
+        "online_issn": "2589-5370"
+    },
+    {
+        "journal": "Gastroenterology",
+        "abbreviation": "Gastroenterology",
+        "online_issn": "1528-0012"
+    },
+    {
+        "journal": "Annals of Internal Medicine",
+        "abbreviation": "Ann Intern Med",
+        "online_issn": "1539-3704"
+    },
+    {
+        "journal": "Mucosal Immunology",
+        "abbreviation": "Mucosal Immunol",
+        "online_issn": "1935-3456"
+    },
+    {
+        "journal": "JAMA Pediatrics",
+        "abbreviation": "JAMA Pediatr",
+        "online_issn": "2168-6211"
+    },
+    {
+        "journal": "American Journal of Respiratory and Critical Care Medicine",
+        "abbreviation": "AJRCCM",
+        "online_issn": "1535-4970"
+    },
+    {
+        "journal": "Journal of Investigative Dermatology",
+        "abbreviation": "JID",
+        "online_issn": "1523-1747"
+    },
+    {
+        "journal": "European Respiratory Journal",
+        "abbreviation": "ERJ",
+        "online_issn": "1399-3003"
+    },
+    {
+        "journal": "British Journal of Dermatology",
+        "abbreviation": "BJD",
+        "online_issn": "1365-2133"
+    }
+]

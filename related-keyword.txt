@@ -1,0 +1,58 @@
+Asthma
+Allergic rhinitis
+Hay fever
+Chronic rhinosinusitis with nasal polyps
+Atopic dermatitis
+Urticaria
+Angioedema
+Anaphylaxis
+Food allergy
+Drug allergy
+Medication allergy
+Penicillin allergy
+Antibiotic allergy
+Contrast allergy
+Latex allergy
+Insect sting allergy
+Venom allergy
+Environmental allergies
+Seasonal allergies
+Mold allergy
+Dust mite allergy
+Pollen allergy
+Pet allergy
+Allergic contact dermatitis
+Nummular eczema
+Eosinophilic esophagitis
+Eosinophilic gastroenteritis
+Mast cell disorders
+Mastocytosis
+Hereditary angioedema
+Immunodeficiency
+Primary immunodeficiency
+Common variable immunodeficiency (CVID)
+Selective IgA deficiency
+Severe combined immunodeficiency (SCID)
+Hyper-IgE syndrome
+Chronic granulomatous disease
+Complement deficiency
+Hypersensitivity reactions
+Type I hypersensitivity
+Type II hypersensitivity
+Type III hypersensitivity
+Type IV hypersensitivity
+Desensitization
+Allergen immunotherapy
+Allergy testing
+Skin prick testing
+Patch testing
+Serum specific IgE testing
+Oral food challenge
+Bronchoprovocation testing
+Occupational allergy
+Exercise-induced asthma
+Aspirin-exacerbated respiratory disease (AERD)
+Nonallergic rhinitis
+Immunotherapy reactions
+Vaccination allergy
+Alpha-gal syndrome
