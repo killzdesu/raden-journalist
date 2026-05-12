@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Research Digest – Dashboard</title>
+  <meta name="description"
+    content="Monitor your daily research article pipeline: pending summaries, sent articles, and run history." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════ HEADER -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-icon">🧬</span>
+        <div>
+          <h1 class="brand-title">Research Digest</h1>
+          <p class="brand-sub">Pipeline Monitor</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-refresh" class="btn btn-ghost" onclick="refreshAll()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10" />
+            <polyline points="1 20 1 14 7 14" />
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+          </svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════════ MAIN -->
+  <main class="page-wrap">
+
+    <!-- ── Stat Cards ─────────────────────────────────────────── -->
+    <section class="section" aria-label="Pipeline statistics">
+      <h2 class="section-title">Overview</h2>
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card" id="stat-total">
+          <div class="stat-icon">📚</div>
+          <div class="stat-body">
+            <div class="stat-value" id="val-total">—</div>
+            <div class="stat-label">Total Articles</div>
+          </div>
+        </div>
+        <div class="stat-card accent-yellow" id="stat-unsummarized">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-body">
+            <div class="stat-value" id="val-unsummarized">—</div>
+            <div class="stat-label">Unsummarized</div>
+          </div>
+        </div>
+        <div class="stat-card accent-blue" id="stat-ready">
+          <div class="stat-icon">✅</div>
+          <div class="stat-body">
+            <div class="stat-value" id="val-ready">—</div>
+            <div class="stat-label">Ready to Send</div>
+          </div>
+        </div>
+        <div class="stat-card accent-red" id="stat-not-sent">
+          <div class="stat-icon">📤</div>
+          <div class="stat-body">
+            <div class="stat-value" id="val-not-sent">—</div>
+            <div class="stat-label">Total Unsent</div>
+          </div>
+        </div>
+        <div class="stat-card accent-green" id="stat-sent">
+          <div class="stat-icon">🚀</div>
+          <div class="stat-body">
+            <div class="stat-value" id="val-sent">—</div>
+            <div class="stat-label">Sent to Discord</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Run Controls ────────────────────────────────────────── -->
+    <section class="section" aria-label="Pipeline controls">
+      <h2 class="section-title">Run Pipeline</h2>
+      <div class="controls-row">
+        <button id="btn-summarize" class="btn btn-primary" onclick="triggerJob('summarize')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polygon points="10 8 16 12 10 16 10 8" />
+          </svg>
+          Summarize Unsummarized
+        </button>
+        <button id="btn-send" class="btn btn-secondary" onclick="triggerJob('send')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+          Send to Discord
+        </button>
+        <button id="btn-full" class="btn btn-outline" onclick="triggerJob('fetch')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          Full Run (Fetch + Summarize + Send)
+        </button>
+      </div>
+
+      <!-- Job output console -->
+      <div id="job-panel" class="job-panel hidden">
+        <div class="job-panel-header">
+          <span id="job-status-label" class="job-status-label">Running…</span>
+          <button class="btn btn-ghost btn-sm" onclick="closeJobPanel()">✕ Close</button>
+        </div>
+        <pre id="job-output" class="job-output"></pre>
+      </div>
+    </section>
+
+    <!-- ── Articles Table ─────────────────────────────────────── -->
+    <section class="section" aria-label="Articles list">
+      <div class="section-head">
+        <h2 class="section-title">Articles</h2>
+        <div class="filter-pills" id="filter-pills">
+          <button class="pill active" data-filter="all" onclick="setFilter('all', this)">All</button>
+          <button class="pill" data-filter="not_sent" onclick="setFilter('not_sent', this)">Unsent</button>
+          <button class="pill" data-filter="ready" onclick="setFilter('ready', this)">Ready to Send</button>
+          <button class="pill" data-filter="unsummarized"
+            onclick="setFilter('unsummarized', this)">Unsummarized</button>
+          <button class="pill" data-filter="sent" onclick="setFilter('sent', this)">Sent</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table" id="articles-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Journal</th>
+              <th>Pub Date</th>
+              <th>Pool</th>
+              <th>Summary</th>
+              <th>Sent</th>
+            </tr>
+          </thead>
+          <tbody id="articles-tbody">
+            <tr>
+              <td colspan="6" class="loading-cell">Loading…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination" id="pagination"></div>
+    </section>
+
+    <!-- ── Run Logs ───────────────────────────────────────────── -->
+    <section class="section" aria-label="Run history">
+      <h2 class="section-title">Run History</h2>
+      <div class="table-wrap">
+        <table class="data-table" id="logs-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Articles Found</th>
+              <th>Articles Sent</th>
+              <th>Status</th>
+              <th>Created At</th>
+            </tr>
+          </thead>
+          <tbody id="logs-tbody">
+            <tr>
+              <td colspan="5" class="loading-cell">Loading…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════════════ MODAL -->
+  <div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal(event)">
+    <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <h3 id="modal-title" class="modal-title">Article Detail</h3>
+        <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <!-- filled dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ SCRIPT -->
+  <script>
+    // ── State ──────────────────────────────────────────────────────
+    let currentFilter = 'all';
+    let currentPage = 1;
+    let jobPolling = null;
+
+    // ── Boot ──────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', refreshAll);
+
+    async function refreshAll() {
+      const btn = document.getElementById('btn-refresh');
+      btn.classList.add('spinning');
+      await Promise.all([loadStats(), loadArticles(), loadLogs()]);
+      btn.classList.remove('spinning');
+    }
+
+    // ── Stats ──────────────────────────────────────────────────────
+    async function loadStats() {
+      try {
+        const data = await fetch('/api/stats').then(r => r.json());
+        setText('val-total', data.total);
+        setText('val-unsummarized', data.unsummarized);
+        setText('val-ready', data.ready_to_send);
+        setText('val-not-sent', data.not_sent);
+        setText('val-sent', data.sent);
+      } catch (e) { console.error('Stats fetch failed', e); }
+    }
+
+    function setText(id, val) {
+      const el = document.getElementById(id);
+      el.textContent = val;
+      el.classList.add('pop');
+      setTimeout(() => el.classList.remove('pop'), 400);
+    }
+
+    // ── Articles ───────────────────────────────────────────────────
+    function setFilter(f, el) {
+      currentFilter = f;
+      currentPage = 1;
+      document.querySelectorAll('#filter-pills .pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      loadArticles();
+    }
+
+    async function loadArticles() {
+      const tbody = document.getElementById('articles-tbody');
+      tbody.innerHTML = '<tr><td colspan="6" class="loading-cell">Loading…</td></tr>';
+      try {
+        const data = await fetch(`/api/articles?filter=${currentFilter}&page=${currentPage}`).then(r => r.json());
+        renderArticles(data);
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6" class="loading-cell error">Failed to load articles.</td></tr>';
+      }
+    }
+
+    function renderArticles({ articles, total, page, per_page }) {
+      const tbody = document.getElementById('articles-tbody');
+      if (!articles.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="loading-cell muted">No articles found.</td></tr>';
+        document.getElementById('pagination').innerHTML = '';
+        return;
+      }
+
+      tbody.innerHTML = articles.map(a => `
+      <tr class="article-row" onclick="openArticle(${a.id})" tabindex="0" role="button" aria-label="View article: ${escHtml(a.title || '')}">
+        <td class="col-title">
+          <span class="title-text">${escHtml(a.title || '—')}</span>
+          ${a.pmid ? `<span class="pmid-badge">PMID ${escHtml(a.pmid)}</span>` : ''}
+        </td>
+        <td class="col-journal">${escHtml(a.journal || '—')}</td>
+        <td class="col-date">${escHtml(a.pub_date || '—')}</td>
+        <td class="col-pool">${poolBadge(a.journal_pool)}</td>
+        <td class="col-status">${a.has_summary ? '<span class="badge badge-ok">✓ Yes</span>' : '<span class="badge badge-warn">Pending</span>'}</td>
+        <td class="col-sent">${a.sent ? '<span class="badge badge-sent">Sent</span>' : '<span class="badge badge-unsent">Unsent</span>'}</td>
+      </tr>`).join('');
+
+      // Keyboard support for rows
+      document.querySelectorAll('.article-row').forEach(row => {
+        row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') row.click(); });
+      });
+
+      renderPagination(total, page, per_page);
+    }
+
+    function poolBadge(pool) {
+      if (!pool) return '<span class="muted">—</span>';
+      const cls = pool.toLowerCase().includes('allergy') ? 'pool-allergy' : 'pool-other';
+      return `<span class="pool-badge ${cls}">${escHtml(pool)}</span>`;
+    }
+
+    function renderPagination(total, page, per_page) {
+      const pages = Math.ceil(total / per_page);
+      const pg = document.getElementById('pagination');
+      if (pages <= 1) { pg.innerHTML = ''; return; }
+
+      let html = `<span class="pg-info">Page ${page} of ${pages} · ${total} articles</span>`;
+      if (page > 1) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${page - 1})">← Prev</button>`;
+      if (page < pages) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${page + 1})">Next →</button>`;
+      pg.innerHTML = html;
+    }
+
+    function goPage(p) { currentPage = p; loadArticles(); }
+
+    // ── Article Modal ──────────────────────────────────────────────
+    async function openArticle(id) {
+      const overlay = document.getElementById('modal-overlay');
+      const body = document.getElementById('modal-body');
+      body.innerHTML = '<div class="modal-loading">Loading…</div>';
+      overlay.classList.remove('hidden');
+      requestAnimationFrame(() => overlay.classList.add('visible'));
+
+      try {
+        const a = await fetch(`/api/articles/${id}`).then(r => r.json());
+        document.getElementById('modal-title').textContent = a.title || 'Article Detail';
+
+        const canDelete = !a.sent && (!a.summary || !a.summary.trim());
+
+        body.innerHTML = `
+        <div class="detail-meta">
+          ${metaRow('Journal', a.journal)}
+          ${metaRow('Authors', a.authors)}
+          ${metaRow('Pub Date', a.pub_date)}
+          ${metaRow('Article Type', a.article_type)}
+          ${metaRow('Pool', a.journal_pool)}
+          ${metaRow('PMID', a.pmid ? `<a href="https://pubmed.ncbi.nlm.nih.gov/${escHtml(a.pmid)}/" target="_blank" rel="noopener" class="ext-link">PubMed ↗</a>` : null, true)}
+          ${metaRow('DOI', a.doi ? `<a href="https://doi.org/${escHtml(a.doi)}" target="_blank" rel="noopener" class="ext-link">doi.org/${escHtml(a.doi)} ↗</a>` : null, true)}
+          ${metaRow('Status', (a.sent ? '<span class="badge badge-sent">Sent to Discord</span>' : '<span class="badge badge-unsent">Not Sent</span>'), true)}
+        </div>
+        ${a.abstract ? `<div class="detail-block"><div class="detail-block-label">Abstract</div><div class="detail-block-text">${escHtml(a.abstract)}</div></div>` : ''}
+        ${a.summary ? `<div class="detail-block"><div class="detail-block-label">AI Summary</div><div class="detail-block-text summary-text">${escHtml(a.summary)}</div></div>` : '<div class="detail-block muted">No summary generated yet.</div>'}
+        ${canDelete ? `<div class="modal-actions"><button class="btn btn-danger" onclick="event.stopPropagation(); deleteArticle(${a.id}, this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Remove Article</button></div>` : ''}
+      `;
+      } catch (e) {
+        body.innerHTML = '<div class="modal-loading error">Failed to load article.</div>';
+      }
+    }
+
+    function metaRow(label, value, raw = false) {
+      if (!value) return '';
+      return `<div class="meta-row"><span class="meta-label">${label}</span><span class="meta-value">${raw ? value : escHtml(value)}</span></div>`;
+    }
+
+    function closeModal(e) {
+      if (e && e.target !== document.getElementById('modal-overlay') && e.type !== 'click') return;
+      if (e && e.currentTarget !== e.target && e.type === 'click') return;
+      const overlay = document.getElementById('modal-overlay');
+      overlay.classList.remove('visible');
+      setTimeout(() => overlay.classList.add('hidden'), 250);
+    }
+    // Close with Escape key
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+    // Correct overlay click
+    document.getElementById('modal-overlay').addEventListener('click', function (e) {
+      if (e.target === this) closeModal();
+    });
+
+    // ── Run Logs ───────────────────────────────────────────────────
+    async function loadLogs() {
+      const tbody = document.getElementById('logs-tbody');
+      try {
+        const logs = await fetch('/api/run-logs').then(r => r.json());
+        if (!logs.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="loading-cell muted">No run logs found.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = logs.map(l => `
+        <tr>
+          <td>${escHtml(l.run_date || '—')}</td>
+          <td class="num">${l.articles_found ?? '—'}</td>
+          <td class="num">${l.articles_sent ?? '—'}</td>
+          <td>${statusBadge(l.status)}</td>
+          <td class="muted small">${escHtml(l.created_at || '—')}</td>
+        </tr>`).join('');
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="loading-cell error">Failed to load logs.</td></tr>';
+      }
+    }
+
+    function statusBadge(s) {
+      if (!s) return '—';
+      const cls = s.startsWith('error') ? 'badge-error' : s.includes('partial') ? 'badge-warn' : 'badge-ok';
+      return `<span class="badge ${cls}">${escHtml(s)}</span>`;
+    }
+
+    // ── Job Trigger ────────────────────────────────────────────────
+    async function triggerJob(mode) {
+      const panel = document.getElementById('job-panel');
+      const label = document.getElementById('job-status-label');
+      const output = document.getElementById('job-output');
+      const btns = ['btn-summarize', 'btn-send', 'btn-full'].map(id => document.getElementById(id));
+
+      panel.classList.remove('hidden');
+      label.textContent = 'Starting…';
+      label.className = 'job-status-label running';
+      output.textContent = '';
+      btns.forEach(b => b.disabled = true);
+
+      try {
+        const res = await fetch('/api/trigger', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode })
+        });
+        if (res.status === 409) {
+          label.textContent = 'A job is already running.';
+          label.className = 'job-status-label warn';
+          btns.forEach(b => b.disabled = false);
+          return;
+        }
+
+        label.textContent = 'Running…';
+        // Poll for output
+        if (jobPolling) clearInterval(jobPolling);
+        jobPolling = setInterval(async () => {
+          const st = await fetch('/api/job-status').then(r => r.json());
+          output.textContent = st.output.join('\n');
+          output.scrollTop = output.scrollHeight;
+          if (!st.running) {
+            clearInterval(jobPolling);
+            jobPolling = null;
+            if (st.returncode === 0) {
+              label.textContent = '✓ Finished successfully';
+              label.className = 'job-status-label done';
+            } else {
+              label.textContent = `✗ Exited with code ${st.returncode}`;
+              label.className = 'job-status-label error';
+            }
+            btns.forEach(b => b.disabled = false);
+            await Promise.all([loadStats(), loadArticles(), loadLogs()]);
+          }
+        }, 1500);
+
+      } catch (e) {
+        label.textContent = 'Failed to start job.';
+        label.className = 'job-status-label error';
+        btns.forEach(b => b.disabled = false);
+      }
+    }
+
+    function closeJobPanel() {
+      document.getElementById('job-panel').classList.add('hidden');
+      if (jobPolling) { clearInterval(jobPolling); jobPolling = null; }
+    }
+
+    // ── Delete Article ─────────────────────────────────────────────
+    async function deleteArticle(id, btn) {
+      if (!confirm('Remove this unsummarized article from the database?')) return;
+      // Visual feedback
+      if (btn) { btn.disabled = true; btn.textContent = 'Removing…'; }
+      try {
+        const res = await fetch(`/api/articles/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Failed to delete article.');
+          if (btn) { btn.disabled = false; btn.textContent = 'Remove Article'; }
+          return;
+        }
+        closeModal();
+        await Promise.all([loadStats(), loadArticles()]);
+      } catch (e) {
+        alert('Failed to delete article.');
+        if (btn) { btn.disabled = false; btn.textContent = 'Remove Article'; }
+      }
+    }
+
+    // ── Util ───────────────────────────────────────────────────────
+    function escHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+  </script>
+
+</body>
+
+</html>
