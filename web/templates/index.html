@@ -1,15 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Research Digest – Dashboard</title>
-  <meta name="description" content="Monitor your daily research article pipeline: pending summaries, sent articles, and run history." />
+  <meta name="description"
+    content="Monitor your daily research article pipeline: pending summaries, sent articles, and run history." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    marked.use({
+      hooks: {
+        postprocess: html => html.replace(/>\n+</g, '><')
+      }
+    });
+  </script>
 </head>
+
 <body>
 
   <header class="site-header">
@@ -23,18 +36,29 @@
       </div>
       <nav class="tab-nav" aria-label="Page navigation">
         <button class="tab-btn active" id="tab-dashboard" onclick="switchTab('dashboard')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+          </svg>
           <span class="tab-btn-label">Dashboard</span>
         </button>
         <button class="tab-btn" id="tab-logs" onclick="switchTab('logs')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
           <span class="tab-btn-label">Run Logs</span>
         </button>
       </nav>
       <div class="header-actions">
         <button id="btn-refresh" class="btn btn-ghost" onclick="refreshAll()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
+            <polyline points="23 4 23 10 17 10" />
+            <polyline points="1 20 1 14 7 14" />
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
           </svg>
         </button>
@@ -90,15 +114,25 @@
       <h2 class="section-title">Run Pipeline</h2>
       <div class="controls-row">
         <button id="btn-summarize" class="btn btn-primary" onclick="triggerJob('summarize')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polygon points="10 8 16 12 10 16 10 8" />
+          </svg>
           Summarize
         </button>
         <button id="btn-send" class="btn btn-secondary" onclick="triggerJob('send')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
           Send to Discord
         </button>
         <button id="btn-full" class="btn btn-outline" onclick="triggerJob('fetch')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
           Full Run
         </button>
       </div>
@@ -123,8 +157,16 @@
             <button class="pill" data-filter="sent" onclick="setFilter('sent', this)">Sent</button>
           </div>
           <button id="btn-sort" class="btn btn-ghost btn-sm sort-btn" onclick="toggleSort()" title="Toggle sort order">
-            <svg id="sort-icon-desc" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-            <svg id="sort-icon-asc" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            <svg id="sort-icon-desc" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <polyline points="19 12 12 19 5 12" />
+            </svg>
+            <svg id="sort-icon-asc" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" style="display:none">
+              <line x1="12" y1="19" x2="12" y2="5" />
+              <polyline points="5 12 12 5 19 12" />
+            </svg>
             <span id="sort-label">Latest</span>
           </button>
         </div>
@@ -140,11 +182,18 @@
         <table class="data-table" id="articles-table">
           <thead>
             <tr>
-              <th>Title</th><th>Journal</th><th>Pub Date</th><th>Pool</th><th>Summary</th><th>Sent</th>
+              <th>Title</th>
+              <th>Journal</th>
+              <th>Pub Date</th>
+              <th>Pool</th>
+              <th>Summary</th>
+              <th>Sent</th>
             </tr>
           </thead>
           <tbody id="articles-tbody">
-            <tr><td colspan="6" class="loading-cell">Loading…</td></tr>
+            <tr>
+              <td colspan="6" class="loading-cell">Loading…</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -160,10 +209,18 @@
       <div class="table-wrap">
         <table class="data-table" id="logs-table">
           <thead>
-            <tr><th>Date</th><th>Found</th><th>Sent</th><th>Status</th><th>Created</th></tr>
+            <tr>
+              <th>Date</th>
+              <th>Found</th>
+              <th>Sent</th>
+              <th>Status</th>
+              <th>Created</th>
+            </tr>
           </thead>
           <tbody id="logs-tbody">
-            <tr><td colspan="5" class="loading-cell">Loading…</td></tr>
+            <tr>
+              <td colspan="5" class="loading-cell">Loading…</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -183,15 +240,15 @@
 
   <script>
     let currentFilter = 'all';
-    let currentPage   = 1;
-    let currentSort   = 'desc';
-    let jobPolling    = null;
-    let currentTab    = 'dashboard';
-    let logsLoaded    = false;
+    let currentPage = 1;
+    let currentSort = 'desc';
+    let jobPolling = null;
+    let currentTab = 'dashboard';
+    let logsLoaded = false;
 
     document.addEventListener('DOMContentLoaded', () => {
       refreshAll();
-      document.getElementById('modal-overlay').addEventListener('click', function(e) {
+      document.getElementById('modal-overlay').addEventListener('click', function (e) {
         if (e.target === this) closeModal();
       });
     });
@@ -219,12 +276,12 @@
     async function loadStats() {
       try {
         const data = await fetch('/api/stats').then(r => r.json());
-        setText('val-total',        data.total);
+        setText('val-total', data.total);
         setText('val-unsummarized', data.unsummarized);
-        setText('val-ready',        data.ready_to_send);
-        setText('val-not-sent',     data.not_sent);
-        setText('val-sent',         data.sent);
-      } catch (_) {}
+        setText('val-ready', data.ready_to_send);
+        setText('val-not-sent', data.not_sent);
+        setText('val-sent', data.sent);
+      } catch (_) { }
     }
 
     function setText(id, val) {
@@ -246,7 +303,7 @@
       currentSort = currentSort === 'desc' ? 'asc' : 'desc';
       currentPage = 1;
       document.getElementById('sort-icon-desc').style.display = currentSort === 'desc' ? '' : 'none';
-      document.getElementById('sort-icon-asc').style.display  = currentSort === 'asc'  ? '' : 'none';
+      document.getElementById('sort-icon-asc').style.display = currentSort === 'asc' ? '' : 'none';
       document.getElementById('sort-label').textContent = currentSort === 'desc' ? 'Latest' : 'Oldest';
       loadArticles();
     }
@@ -325,7 +382,7 @@
       const pg = document.getElementById('pagination');
       if (pages <= 1) { pg.innerHTML = ''; return; }
       let html = `<span class="pg-info">${page}/${pages} · ${total} articles</span>`;
-      if (page > 1)    html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${page - 1})">← Prev</button>`;
+      if (page > 1) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${page - 1})">← Prev</button>`;
       if (page < pages) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${page + 1})">Next →</button>`;
       pg.innerHTML = html;
     }
@@ -356,7 +413,7 @@
             ${metaRow('Status', (a.sent ? '<span class="badge badge-sent">Sent</span>' : '<span class="badge badge-unsent">Not Sent</span>'), true)}
           </div>
           ${a.abstract ? `<div class="detail-block"><div class="detail-block-label">Abstract</div><div class="detail-block-text">${escHtml(a.abstract)}</div></div>` : ''}
-          ${a.summary ? `<div class="detail-block"><div class="detail-block-label">AI Summary</div><div class="detail-block-text summary-text">${escHtml(a.summary)}</div></div>` : '<div class="detail-block muted">No summary generated yet.</div>'}
+          ${a.summary ? `<div class="detail-block"><div class="detail-block-label">AI Summary</div><div class="detail-block-text summary-text">${marked.parse(a.summary.trim())}</div></div>` : '<div class="detail-block muted">No summary generated yet.</div>'}
           ${canDelete ? `<div class="modal-actions"><button class="btn btn-danger" onclick="event.stopPropagation(); deleteArticle(${a.id}, this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Remove</button></div>` : ''}
         `;
       } catch (_) {
@@ -405,6 +462,9 @@
     }
 
     async function triggerJob(mode) {
+      const modeNames = { 'summarize': 'Summarize', 'send': 'Send to Discord', 'fetch': 'Full Run' };
+      if (!confirm(`Are you sure you want to start the ${modeNames[mode] || mode} job?`)) return;
+
       const panel = document.getElementById('job-panel');
       const label = document.getElementById('job-status-label');
       const output = document.getElementById('job-output');
@@ -489,4 +549,5 @@
     }
   </script>
 </body>
+
 </html>

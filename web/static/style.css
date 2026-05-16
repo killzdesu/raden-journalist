@@ -605,6 +605,20 @@ a:hover { text-decoration: underline; }
   color: #c9d5e3;
   border-left: 3px solid var(--teal);
   padding-left: 12px;
+  white-space: normal;
+}
+.summary-text p {
+  margin-bottom: 0.75em;
+}
+.summary-text p:last-child {
+  margin-bottom: 0;
+}
+.summary-text ul, .summary-text ol {
+  margin-bottom: 0.75em;
+  padding-left: 20px;
+}
+.summary-text li {
+  margin-bottom: 0.25em;
 }
 .ext-link { color: var(--teal); }
 .ext-link:hover { text-decoration: underline; }
