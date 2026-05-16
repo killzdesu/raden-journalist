@@ -1,21 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Research Digest – Dashboard</title>
-  <meta name="description"
-    content="Monitor your daily research article pipeline: pending summaries, sent articles, and run history." />
+  <meta name="description" content="Monitor your daily research article pipeline: pending summaries, sent articles, and run history." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/style.css" />
 </head>
-
 <body>
 
-  <!-- ═══════════════════════════════════════════════════════════ HEADER -->
   <header class="site-header">
     <div class="header-inner">
       <div class="brand">
@@ -25,23 +21,30 @@
           <p class="brand-sub">Pipeline Monitor</p>
         </div>
       </div>
+      <nav class="tab-nav" aria-label="Page navigation">
+        <button class="tab-btn active" id="tab-dashboard" onclick="switchTab('dashboard')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          <span class="tab-btn-label">Dashboard</span>
+        </button>
+        <button class="tab-btn" id="tab-logs" onclick="switchTab('logs')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span class="tab-btn-label">Run Logs</span>
+        </button>
+      </nav>
       <div class="header-actions">
         <button id="btn-refresh" class="btn btn-ghost" onclick="refreshAll()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="23 4 23 10 17 10" />
-            <polyline points="1 20 1 14 7 14" />
+            <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
           </svg>
-          Refresh
         </button>
       </div>
     </div>
   </header>
 
-  <!-- ═══════════════════════════════════════════════════════════ MAIN -->
-  <main class="page-wrap">
+  <!-- DASHBOARD PAGE -->
+  <main class="page-wrap" id="page-dashboard">
 
-    <!-- ── Stat Cards ─────────────────────────────────────────── -->
     <section class="section" aria-label="Pipeline statistics">
       <h2 class="section-title">Overview</h2>
       <div class="stats-grid" id="stats-grid">
@@ -52,21 +55,21 @@
             <div class="stat-label">Total Articles</div>
           </div>
         </div>
-        <div class="stat-card accent-yellow" id="stat-unsummarized">
+        <div class="stat-card accent-amber" id="stat-unsummarized">
           <div class="stat-icon">⏳</div>
           <div class="stat-body">
             <div class="stat-value" id="val-unsummarized">—</div>
             <div class="stat-label">Unsummarized</div>
           </div>
         </div>
-        <div class="stat-card accent-blue" id="stat-ready">
+        <div class="stat-card accent-teal" id="stat-ready">
           <div class="stat-icon">✅</div>
           <div class="stat-body">
             <div class="stat-value" id="val-ready">—</div>
             <div class="stat-label">Ready to Send</div>
           </div>
         </div>
-        <div class="stat-card accent-red" id="stat-not-sent">
+        <div class="stat-card accent-rose" id="stat-not-sent">
           <div class="stat-icon">📤</div>
           <div class="stat-body">
             <div class="stat-value" id="val-not-sent">—</div>
@@ -83,146 +86,145 @@
       </div>
     </section>
 
-    <!-- ── Run Controls ────────────────────────────────────────── -->
     <section class="section" aria-label="Pipeline controls">
       <h2 class="section-title">Run Pipeline</h2>
       <div class="controls-row">
         <button id="btn-summarize" class="btn btn-primary" onclick="triggerJob('summarize')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" />
-            <polygon points="10 8 16 12 10 16 10 8" />
-          </svg>
-          Summarize Unsummarized
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
+          Summarize
         </button>
         <button id="btn-send" class="btn btn-secondary" onclick="triggerJob('send')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="22" y1="2" x2="11" y2="13" />
-            <polygon points="22 2 15 22 11 13 2 9 22 2" />
-          </svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
           Send to Discord
         </button>
         <button id="btn-full" class="btn btn-outline" onclick="triggerJob('fetch')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="17 8 12 3 7 8" />
-            <line x1="12" y1="3" x2="12" y2="15" />
-          </svg>
-          Full Run (Fetch + Summarize + Send)
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+          Full Run
         </button>
       </div>
-
-      <!-- Job output console -->
       <div id="job-panel" class="job-panel hidden">
         <div class="job-panel-header">
           <span id="job-status-label" class="job-status-label">Running…</span>
-          <button class="btn btn-ghost btn-sm" onclick="closeJobPanel()">✕ Close</button>
+          <button class="btn btn-ghost btn-sm" onclick="closeJobPanel()">✕</button>
         </div>
         <pre id="job-output" class="job-output"></pre>
       </div>
     </section>
 
-    <!-- ── Articles Table ─────────────────────────────────────── -->
     <section class="section" aria-label="Articles list">
       <div class="section-head">
         <h2 class="section-title">Articles</h2>
-        <div class="filter-pills" id="filter-pills">
-          <button class="pill active" data-filter="all" onclick="setFilter('all', this)">All</button>
-          <button class="pill" data-filter="not_sent" onclick="setFilter('not_sent', this)">Unsent</button>
-          <button class="pill" data-filter="ready" onclick="setFilter('ready', this)">Ready to Send</button>
-          <button class="pill" data-filter="unsummarized"
-            onclick="setFilter('unsummarized', this)">Unsummarized</button>
-          <button class="pill" data-filter="sent" onclick="setFilter('sent', this)">Sent</button>
+        <div class="table-controls">
+          <div class="filter-pills" id="filter-pills">
+            <button class="pill active" data-filter="all" onclick="setFilter('all', this)">All</button>
+            <button class="pill" data-filter="not_sent" onclick="setFilter('not_sent', this)">Unsent</button>
+            <button class="pill" data-filter="ready" onclick="setFilter('ready', this)">Ready</button>
+            <button class="pill" data-filter="unsummarized" onclick="setFilter('unsummarized', this)">Pending</button>
+            <button class="pill" data-filter="sent" onclick="setFilter('sent', this)">Sent</button>
+          </div>
+          <button id="btn-sort" class="btn btn-ghost btn-sm sort-btn" onclick="toggleSort()" title="Toggle sort order">
+            <svg id="sort-icon-desc" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+            <svg id="sort-icon-asc" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            <span id="sort-label">Latest</span>
+          </button>
         </div>
       </div>
 
-      <div class="table-wrap">
+      <!-- Mobile: card list -->
+      <div class="article-cards" id="article-cards">
+        <div class="cards-empty">Loading…</div>
+      </div>
+
+      <!-- Desktop: table -->
+      <div class="table-wrap" id="table-wrap-articles">
         <table class="data-table" id="articles-table">
           <thead>
             <tr>
-              <th>Title</th>
-              <th>Journal</th>
-              <th>Pub Date</th>
-              <th>Pool</th>
-              <th>Summary</th>
-              <th>Sent</th>
+              <th>Title</th><th>Journal</th><th>Pub Date</th><th>Pool</th><th>Summary</th><th>Sent</th>
             </tr>
           </thead>
           <tbody id="articles-tbody">
-            <tr>
-              <td colspan="6" class="loading-cell">Loading…</td>
-            </tr>
+            <tr><td colspan="6" class="loading-cell">Loading…</td></tr>
           </tbody>
         </table>
       </div>
 
       <div class="pagination" id="pagination"></div>
     </section>
+  </main>
 
-    <!-- ── Run Logs ───────────────────────────────────────────── -->
+  <!-- RUN LOGS PAGE -->
+  <main class="page-wrap hidden" id="page-logs">
     <section class="section" aria-label="Run history">
       <h2 class="section-title">Run History</h2>
       <div class="table-wrap">
         <table class="data-table" id="logs-table">
           <thead>
-            <tr>
-              <th>Date</th>
-              <th>Articles Found</th>
-              <th>Articles Sent</th>
-              <th>Status</th>
-              <th>Created At</th>
-            </tr>
+            <tr><th>Date</th><th>Found</th><th>Sent</th><th>Status</th><th>Created</th></tr>
           </thead>
           <tbody id="logs-tbody">
-            <tr>
-              <td colspan="5" class="loading-cell">Loading…</td>
-            </tr>
+            <tr><td colspan="5" class="loading-cell">Loading…</td></tr>
           </tbody>
         </table>
       </div>
     </section>
-
   </main>
 
-  <!-- ═══════════════════════════════════════════════════════════ MODAL -->
-  <div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal(event)">
+  <!-- MODAL -->
+  <div id="modal-overlay" class="modal-overlay hidden">
     <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-header">
         <h3 id="modal-title" class="modal-title">Article Detail</h3>
         <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
       </div>
-      <div class="modal-body" id="modal-body">
-        <!-- filled dynamically -->
-      </div>
+      <div class="modal-body" id="modal-body"></div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════ SCRIPT -->
   <script>
-    // ── State ──────────────────────────────────────────────────────
     let currentFilter = 'all';
-    let currentPage = 1;
-    let jobPolling = null;
+    let currentPage   = 1;
+    let currentSort   = 'desc';
+    let jobPolling    = null;
+    let currentTab    = 'dashboard';
+    let logsLoaded    = false;
 
-    // ── Boot ──────────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', refreshAll);
+    document.addEventListener('DOMContentLoaded', () => {
+      refreshAll();
+      document.getElementById('modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+      });
+    });
 
     async function refreshAll() {
       const btn = document.getElementById('btn-refresh');
       btn.classList.add('spinning');
-      await Promise.all([loadStats(), loadArticles(), loadLogs()]);
+      if (currentTab === 'dashboard') {
+        await Promise.all([loadStats(), loadArticles()]);
+      } else {
+        await loadLogs();
+      }
       btn.classList.remove('spinning');
     }
 
-    // ── Stats ──────────────────────────────────────────────────────
+    function switchTab(tab) {
+      currentTab = tab;
+      document.getElementById('page-dashboard').classList.toggle('hidden', tab !== 'dashboard');
+      document.getElementById('page-logs').classList.toggle('hidden', tab !== 'logs');
+      document.getElementById('tab-dashboard').classList.toggle('active', tab === 'dashboard');
+      document.getElementById('tab-logs').classList.toggle('active', tab === 'logs');
+      if (tab === 'logs' && !logsLoaded) { loadLogs(); logsLoaded = true; }
+    }
+
     async function loadStats() {
       try {
         const data = await fetch('/api/stats').then(r => r.json());
-        setText('val-total', data.total);
+        setText('val-total',        data.total);
         setText('val-unsummarized', data.unsummarized);
-        setText('val-ready', data.ready_to_send);
-        setText('val-not-sent', data.not_sent);
-        setText('val-sent', data.sent);
-      } catch (e) { console.error('Stats fetch failed', e); }
+        setText('val-ready',        data.ready_to_send);
+        setText('val-not-sent',     data.not_sent);
+        setText('val-sent',         data.sent);
+      } catch (_) {}
     }
 
     function setText(id, val) {
@@ -232,7 +234,6 @@
       setTimeout(() => el.classList.remove('pop'), 400);
     }
 
-    // ── Articles ───────────────────────────────────────────────────
     function setFilter(f, el) {
       currentFilter = f;
       currentPage = 1;
@@ -241,48 +242,80 @@
       loadArticles();
     }
 
+    function toggleSort() {
+      currentSort = currentSort === 'desc' ? 'asc' : 'desc';
+      currentPage = 1;
+      document.getElementById('sort-icon-desc').style.display = currentSort === 'desc' ? '' : 'none';
+      document.getElementById('sort-icon-asc').style.display  = currentSort === 'asc'  ? '' : 'none';
+      document.getElementById('sort-label').textContent = currentSort === 'desc' ? 'Latest' : 'Oldest';
+      loadArticles();
+    }
+
     async function loadArticles() {
       const tbody = document.getElementById('articles-tbody');
+      const cards = document.getElementById('article-cards');
       tbody.innerHTML = '<tr><td colspan="6" class="loading-cell">Loading…</td></tr>';
+      cards.innerHTML = '<div class="cards-empty">Loading…</div>';
       try {
-        const data = await fetch(`/api/articles?filter=${currentFilter}&page=${currentPage}`).then(r => r.json());
+        const data = await fetch(`/api/articles?filter=${currentFilter}&page=${currentPage}&sort=${currentSort}`).then(r => r.json());
         renderArticles(data);
-      } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="6" class="loading-cell error">Failed to load articles.</td></tr>';
+      } catch (_) {
+        tbody.innerHTML = '<tr><td colspan="6" class="loading-cell error">Failed to load.</td></tr>';
+        cards.innerHTML = '<div class="cards-empty error">Failed to load articles.</div>';
       }
     }
 
     function renderArticles({ articles, total, page, per_page }) {
       const tbody = document.getElementById('articles-tbody');
+      const cards = document.getElementById('article-cards');
+
       if (!articles.length) {
         tbody.innerHTML = '<tr><td colspan="6" class="loading-cell muted">No articles found.</td></tr>';
+        cards.innerHTML = '<div class="cards-empty muted">No articles found.</div>';
         document.getElementById('pagination').innerHTML = '';
         return;
       }
 
+      // Table rows (desktop)
       tbody.innerHTML = articles.map(a => `
-      <tr class="article-row" onclick="openArticle(${a.id})" tabindex="0" role="button" aria-label="View article: ${escHtml(a.title || '')}">
-        <td class="col-title">
-          <span class="title-text">${escHtml(a.title || '—')}</span>
-          ${a.pmid ? `<span class="pmid-badge">PMID ${escHtml(a.pmid)}</span>` : ''}
-        </td>
-        <td class="col-journal">${escHtml(a.journal || '—')}</td>
-        <td class="col-date">${escHtml(a.pub_date || '—')}</td>
-        <td class="col-pool">${poolBadge(a.journal_pool)}</td>
-        <td class="col-status">${a.has_summary ? '<span class="badge badge-ok">✓ Yes</span>' : '<span class="badge badge-warn">Pending</span>'}</td>
-        <td class="col-sent">${a.sent ? '<span class="badge badge-sent">Sent</span>' : '<span class="badge badge-unsent">Unsent</span>'}</td>
-      </tr>`).join('');
+        <tr class="article-row" onclick="openArticle(${a.id})" tabindex="0" role="button" aria-label="View: ${escHtml(a.title || '')}">
+          <td class="col-title">
+            <span class="title-text">${escHtml(a.title || '—')}</span>
+            ${a.pmid ? `<span class="pmid-badge">PMID ${escHtml(a.pmid)}</span>` : ''}
+          </td>
+          <td class="col-journal">${escHtml(a.journal || '—')}</td>
+          <td class="col-date">${escHtml(a.pub_date || '—')}</td>
+          <td class="col-pool">${poolBadge(a.journal_pool)}</td>
+          <td class="col-status">${a.has_summary ? '<span class="badge badge-ok">✓ Yes</span>' : '<span class="badge badge-warn">Pending</span>'}</td>
+          <td class="col-sent">${a.sent ? '<span class="badge badge-sent">Sent</span>' : '<span class="badge badge-unsent">Unsent</span>'}</td>
+        </tr>`).join('');
 
-      // Keyboard support for rows
-      document.querySelectorAll('.article-row').forEach(row => {
-        row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') row.click(); });
+      // Card list (mobile)
+      cards.innerHTML = articles.map(a => `
+        <div class="article-card" onclick="openArticle(${a.id})" tabindex="0" role="button" aria-label="View: ${escHtml(a.title || '')}">
+          <div class="card-title">${escHtml(a.title || '—')}</div>
+          <div class="card-meta">
+            <span>${escHtml(a.journal || '—')}</span>
+            <span class="card-meta-sep">·</span>
+            <span>${escHtml(a.pub_date || '—')}</span>
+          </div>
+          <div class="card-badges">
+            ${a.has_summary ? '<span class="badge badge-ok">✓ Summary</span>' : '<span class="badge badge-warn">Pending</span>'}
+            ${a.sent ? '<span class="badge badge-sent">Sent</span>' : '<span class="badge badge-unsent">Unsent</span>'}
+            ${poolBadge(a.journal_pool)}
+          </div>
+        </div>`).join('');
+
+      // Keyboard support
+      document.querySelectorAll('.article-row, .article-card').forEach(el => {
+        el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') el.click(); });
       });
 
       renderPagination(total, page, per_page);
     }
 
     function poolBadge(pool) {
-      if (!pool) return '<span class="muted">—</span>';
+      if (!pool) return '';
       const cls = pool.toLowerCase().includes('allergy') ? 'pool-allergy' : 'pool-other';
       return `<span class="pool-badge ${cls}">${escHtml(pool)}</span>`;
     }
@@ -291,16 +324,14 @@
       const pages = Math.ceil(total / per_page);
       const pg = document.getElementById('pagination');
       if (pages <= 1) { pg.innerHTML = ''; return; }
-
-      let html = `<span class="pg-info">Page ${page} of ${pages} · ${total} articles</span>`;
-      if (page > 1) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${page - 1})">← Prev</button>`;
+      let html = `<span class="pg-info">${page}/${pages} · ${total} articles</span>`;
+      if (page > 1)    html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${page - 1})">← Prev</button>`;
       if (page < pages) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${page + 1})">Next →</button>`;
       pg.innerHTML = html;
     }
 
     function goPage(p) { currentPage = p; loadArticles(); }
 
-    // ── Article Modal ──────────────────────────────────────────────
     async function openArticle(id) {
       const overlay = document.getElementById('modal-overlay');
       const body = document.getElementById('modal-body');
@@ -311,25 +342,24 @@
       try {
         const a = await fetch(`/api/articles/${id}`).then(r => r.json());
         document.getElementById('modal-title').textContent = a.title || 'Article Detail';
-
         const canDelete = !a.sent && (!a.summary || !a.summary.trim());
 
         body.innerHTML = `
-        <div class="detail-meta">
-          ${metaRow('Journal', a.journal)}
-          ${metaRow('Authors', a.authors)}
-          ${metaRow('Pub Date', a.pub_date)}
-          ${metaRow('Article Type', a.article_type)}
-          ${metaRow('Pool', a.journal_pool)}
-          ${metaRow('PMID', a.pmid ? `<a href="https://pubmed.ncbi.nlm.nih.gov/${escHtml(a.pmid)}/" target="_blank" rel="noopener" class="ext-link">PubMed ↗</a>` : null, true)}
-          ${metaRow('DOI', a.doi ? `<a href="https://doi.org/${escHtml(a.doi)}" target="_blank" rel="noopener" class="ext-link">doi.org/${escHtml(a.doi)} ↗</a>` : null, true)}
-          ${metaRow('Status', (a.sent ? '<span class="badge badge-sent">Sent to Discord</span>' : '<span class="badge badge-unsent">Not Sent</span>'), true)}
-        </div>
-        ${a.abstract ? `<div class="detail-block"><div class="detail-block-label">Abstract</div><div class="detail-block-text">${escHtml(a.abstract)}</div></div>` : ''}
-        ${a.summary ? `<div class="detail-block"><div class="detail-block-label">AI Summary</div><div class="detail-block-text summary-text">${escHtml(a.summary)}</div></div>` : '<div class="detail-block muted">No summary generated yet.</div>'}
-        ${canDelete ? `<div class="modal-actions"><button class="btn btn-danger" onclick="event.stopPropagation(); deleteArticle(${a.id}, this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Remove Article</button></div>` : ''}
-      `;
-      } catch (e) {
+          <div class="detail-meta">
+            ${metaRow('Journal', a.journal)}
+            ${metaRow('Authors', a.authors)}
+            ${metaRow('Pub Date', a.pub_date)}
+            ${metaRow('Type', a.article_type)}
+            ${metaRow('Pool', a.journal_pool)}
+            ${metaRow('PMID', a.pmid ? `<a href="https://pubmed.ncbi.nlm.nih.gov/${escHtml(a.pmid)}/" target="_blank" rel="noopener" class="ext-link">PubMed ↗</a>` : null, true)}
+            ${metaRow('DOI', a.doi ? `<a href="https://doi.org/${escHtml(a.doi)}" target="_blank" rel="noopener" class="ext-link">doi.org/${escHtml(a.doi)} ↗</a>` : null, true)}
+            ${metaRow('Status', (a.sent ? '<span class="badge badge-sent">Sent</span>' : '<span class="badge badge-unsent">Not Sent</span>'), true)}
+          </div>
+          ${a.abstract ? `<div class="detail-block"><div class="detail-block-label">Abstract</div><div class="detail-block-text">${escHtml(a.abstract)}</div></div>` : ''}
+          ${a.summary ? `<div class="detail-block"><div class="detail-block-label">AI Summary</div><div class="detail-block-text summary-text">${escHtml(a.summary)}</div></div>` : '<div class="detail-block muted">No summary generated yet.</div>'}
+          ${canDelete ? `<div class="modal-actions"><button class="btn btn-danger" onclick="event.stopPropagation(); deleteArticle(${a.id}, this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Remove</button></div>` : ''}
+        `;
+      } catch (_) {
         body.innerHTML = '<div class="modal-loading error">Failed to load article.</div>';
       }
     }
@@ -339,21 +369,14 @@
       return `<div class="meta-row"><span class="meta-label">${label}</span><span class="meta-value">${raw ? value : escHtml(value)}</span></div>`;
     }
 
-    function closeModal(e) {
-      if (e && e.target !== document.getElementById('modal-overlay') && e.type !== 'click') return;
-      if (e && e.currentTarget !== e.target && e.type === 'click') return;
+    function closeModal() {
       const overlay = document.getElementById('modal-overlay');
       overlay.classList.remove('visible');
       setTimeout(() => overlay.classList.add('hidden'), 250);
     }
-    // Close with Escape key
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-    // Correct overlay click
-    document.getElementById('modal-overlay').addEventListener('click', function (e) {
-      if (e.target === this) closeModal();
-    });
 
-    // ── Run Logs ───────────────────────────────────────────────────
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
     async function loadLogs() {
       const tbody = document.getElementById('logs-tbody');
       try {
@@ -363,14 +386,14 @@
           return;
         }
         tbody.innerHTML = logs.map(l => `
-        <tr>
-          <td>${escHtml(l.run_date || '—')}</td>
-          <td class="num">${l.articles_found ?? '—'}</td>
-          <td class="num">${l.articles_sent ?? '—'}</td>
-          <td>${statusBadge(l.status)}</td>
-          <td class="muted small">${escHtml(l.created_at || '—')}</td>
-        </tr>`).join('');
-      } catch (e) {
+          <tr>
+            <td>${escHtml(l.run_date || '—')}</td>
+            <td class="num">${l.articles_found ?? '—'}</td>
+            <td class="num">${l.articles_sent ?? '—'}</td>
+            <td>${statusBadge(l.status)}</td>
+            <td class="muted small">${escHtml(l.created_at || '—')}</td>
+          </tr>`).join('');
+      } catch (_) {
         tbody.innerHTML = '<tr><td colspan="5" class="loading-cell error">Failed to load logs.</td></tr>';
       }
     }
@@ -381,7 +404,6 @@
       return `<span class="badge ${cls}">${escHtml(s)}</span>`;
     }
 
-    // ── Job Trigger ────────────────────────────────────────────────
     async function triggerJob(mode) {
       const panel = document.getElementById('job-panel');
       const label = document.getElementById('job-status-label');
@@ -408,7 +430,6 @@
         }
 
         label.textContent = 'Running…';
-        // Poll for output
         if (jobPolling) clearInterval(jobPolling);
         jobPolling = setInterval(async () => {
           const st = await fetch('/api/job-status').then(r => r.json());
@@ -425,11 +446,11 @@
               label.className = 'job-status-label error';
             }
             btns.forEach(b => b.disabled = false);
-            await Promise.all([loadStats(), loadArticles(), loadLogs()]);
+            logsLoaded = false;
+            await Promise.all([loadStats(), loadArticles()]);
           }
         }, 1500);
-
-      } catch (e) {
+      } catch (_) {
         label.textContent = 'Failed to start job.';
         label.className = 'job-status-label error';
         btns.forEach(b => b.disabled = false);
@@ -441,10 +462,8 @@
       if (jobPolling) { clearInterval(jobPolling); jobPolling = null; }
     }
 
-    // ── Delete Article ─────────────────────────────────────────────
     async function deleteArticle(id, btn) {
       if (!confirm('Remove this unsummarized article from the database?')) return;
-      // Visual feedback
       if (btn) { btn.disabled = true; btn.textContent = 'Removing…'; }
       try {
         const res = await fetch(`/api/articles/${id}`, { method: 'DELETE' });
@@ -456,13 +475,12 @@
         }
         closeModal();
         await Promise.all([loadStats(), loadArticles()]);
-      } catch (e) {
+      } catch (_) {
         alert('Failed to delete article.');
         if (btn) { btn.disabled = false; btn.textContent = 'Remove Article'; }
       }
     }
 
-    // ── Util ───────────────────────────────────────────────────────
     function escHtml(str) {
       if (!str) return '';
       return String(str)
@@ -470,7 +488,5 @@
         .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
   </script>
-
 </body>
-
 </html>

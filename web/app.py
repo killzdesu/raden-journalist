@@ -67,6 +67,8 @@ def api_stats():
 @app.route("/api/articles")
 def api_articles():
     filter_by = request.args.get("filter", "all")  # all | not_sent | ready | unsummarized | sent
+    sort_dir  = request.args.get("sort", "desc")    # desc = latest first, asc = oldest first
+    order     = "DESC" if sort_dir != "asc" else "ASC"
     page = int(request.args.get("page", 1))
     per_page = 20
     offset = (page - 1) * per_page
@@ -93,7 +95,7 @@ def api_articles():
                    sent,
                    CASE WHEN summary IS NOT NULL AND summary != '' THEN 1 ELSE 0 END AS has_summary
             FROM articles {where_clause}
-            ORDER BY pub_date DESC, id DESC
+            ORDER BY pub_date {order}, id {order}
             LIMIT ? OFFSET ?""",
         (per_page, offset),
     )
@@ -101,6 +103,7 @@ def api_articles():
     conn.close()
 
     return jsonify({"articles": rows, "total": total_count, "page": page, "per_page": per_page})
+
 
 
 @app.route("/api/articles/<int:article_id>")
@@ -218,4 +221,4 @@ def api_job_status():
 
 if __name__ == "__main__":
     # Bind to all interfaces so it's reachable on the VPS
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(host="0.0.0.0", port=5055, debug=False)
