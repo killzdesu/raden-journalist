@@ -113,6 +113,18 @@
     <section class="section" aria-label="Pipeline controls">
       <h2 class="section-title">Run Pipeline</h2>
       <div class="controls-row">
+        <select id="select-articles-per-run" class="select-dropdown" aria-label="Articles per run">
+          <option value="1" {% if max_articles_per_run == 1 %}selected{% endif %}>1 article</option>
+          <option value="2" {% if max_articles_per_run == 2 %}selected{% endif %}>2 articles</option>
+          <option value="3" {% if max_articles_per_run == 3 %}selected{% endif %}>3 articles</option>
+          <option value="4" {% if max_articles_per_run == 4 %}selected{% endif %}>4 articles</option>
+          <option value="5" {% if max_articles_per_run == 5 %}selected{% endif %}>5 articles</option>
+          <option value="6" {% if max_articles_per_run == 6 %}selected{% endif %}>6 articles</option>
+          <option value="7" {% if max_articles_per_run == 7 %}selected{% endif %}>7 articles</option>
+          <option value="8" {% if max_articles_per_run == 8 %}selected{% endif %}>8 articles</option>
+          <option value="9" {% if max_articles_per_run == 9 %}selected{% endif %}>9 articles</option>
+          <option value="10" {% if max_articles_per_run == 10 %}selected{% endif %}>10 articles</option>
+        </select>
         <button id="btn-summarize" class="btn btn-primary" onclick="triggerJob('summarize')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10" />
@@ -399,7 +411,7 @@
       try {
         const a = await fetch(`/api/articles/${id}`).then(r => r.json());
         document.getElementById('modal-title').textContent = a.title || 'Article Detail';
-        const canDelete = !a.sent && (!a.summary || !a.summary.trim());
+        const canDelete = !a.sent;
 
         body.innerHTML = `
           <div class="detail-meta">
@@ -414,7 +426,24 @@
           </div>
           ${a.abstract ? `<div class="detail-block"><div class="detail-block-label">Abstract</div><div class="detail-block-text">${escHtml(a.abstract)}</div></div>` : ''}
           ${a.summary ? `<div class="detail-block"><div class="detail-block-label">AI Summary</div><div class="detail-block-text summary-text">${marked.parse(a.summary.trim())}</div></div>` : '<div class="detail-block muted">No summary generated yet.</div>'}
-          ${canDelete ? `<div class="modal-actions"><button class="btn btn-danger" onclick="event.stopPropagation(); deleteArticle(${a.id}, this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Remove</button></div>` : ''}
+          <div class="modal-actions">
+            ${a.sent ? `
+            <button class="btn btn-primary" onclick="event.stopPropagation(); triggerResend(${a.id}, this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
+              Resend
+            </button>
+            ` : (a.summary && a.summary.trim() ? `
+            <button class="btn btn-primary" onclick="event.stopPropagation(); triggerSendNow(${a.id}, this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
+              Send Now
+            </button>
+            ` : '')}
+            <button class="btn btn-secondary" onclick="event.stopPropagation(); triggerResummarize(${a.id}, this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 22v-6h6"/></svg>
+              Resummarize
+            </button>
+            ${canDelete ? `<button class="btn btn-danger" onclick="event.stopPropagation(); deleteArticle(${a.id}, this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Remove</button>` : ''}
+          </div>
         `;
       } catch (_) {
         body.innerHTML = '<div class="modal-loading error">Failed to load article.</div>';
@@ -469,6 +498,7 @@
       const label = document.getElementById('job-status-label');
       const output = document.getElementById('job-output');
       const btns = ['btn-summarize', 'btn-send', 'btn-full'].map(id => document.getElementById(id));
+      const articlesPerRun = document.getElementById('select-articles-per-run').value;
 
       panel.classList.remove('hidden');
       label.textContent = 'Starting…';
@@ -480,7 +510,7 @@
         const res = await fetch('/api/trigger', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mode })
+          body: JSON.stringify({ mode, articles_per_run: parseInt(articlesPerRun) })
         });
         if (res.status === 409) {
           label.textContent = 'A job is already running.';
@@ -514,6 +544,162 @@
         label.textContent = 'Failed to start job.';
         label.className = 'job-status-label error';
         btns.forEach(b => b.disabled = false);
+      }
+    }
+
+    async function triggerResummarize(id, btn) {
+      if (!confirm('Are you sure you want to resummarize this article?')) return;
+      
+      const panel = document.getElementById('job-panel');
+      const label = document.getElementById('job-status-label');
+      const output = document.getElementById('job-output');
+
+      closeModal();
+      panel.classList.remove('hidden');
+      label.textContent = 'Starting…';
+      label.className = 'job-status-label running';
+      output.textContent = '';
+      
+      try {
+        const res = await fetch('/api/resummarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ article_id: id })
+        });
+        
+        if (res.status === 409) {
+          label.textContent = 'A job is already running.';
+          label.className = 'job-status-label warn';
+          return;
+        }
+
+        label.textContent = 'Resummarizing…';
+        if (jobPolling) clearInterval(jobPolling);
+        jobPolling = setInterval(async () => {
+          const st = await fetch('/api/job-status').then(r => r.json());
+          output.textContent = st.output.join('\n');
+          output.scrollTop = output.scrollHeight;
+          if (!st.running) {
+            clearInterval(jobPolling);
+            jobPolling = null;
+            if (st.returncode === 0) {
+              label.textContent = '✓ Resummarization finished successfully';
+              label.className = 'job-status-label done';
+            } else {
+              label.textContent = `✗ Exited with code ${st.returncode}`;
+              label.className = 'job-status-label error';
+            }
+            logsLoaded = false;
+            await Promise.all([loadStats(), loadArticles()]);
+          }
+        }, 1500);
+      } catch (_) {
+        label.textContent = 'Failed to start resummarize job.';
+        label.className = 'job-status-label error';
+      }
+    }
+
+    async function triggerResend(id, btn) {
+      if (!confirm('Are you sure you want to resend this article to Discord?')) return;
+      
+      const panel = document.getElementById('job-panel');
+      const label = document.getElementById('job-status-label');
+      const output = document.getElementById('job-output');
+
+      closeModal();
+      panel.classList.remove('hidden');
+      label.textContent = 'Starting…';
+      label.className = 'job-status-label running';
+      output.textContent = '';
+      
+      try {
+        const res = await fetch('/api/resend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ article_id: id })
+        });
+        
+        if (res.status === 409) {
+          label.textContent = 'A job is already running.';
+          label.className = 'job-status-label warn';
+          return;
+        }
+
+        label.textContent = 'Resending…';
+        if (jobPolling) clearInterval(jobPolling);
+        jobPolling = setInterval(async () => {
+          const st = await fetch('/api/job-status').then(r => r.json());
+          output.textContent = st.output.join('\n');
+          output.scrollTop = output.scrollHeight;
+          if (!st.running) {
+            clearInterval(jobPolling);
+            jobPolling = null;
+            if (st.returncode === 0) {
+              label.textContent = '✓ Resent successfully';
+              label.className = 'job-status-label done';
+            } else {
+              label.textContent = `✗ Exited with code ${st.returncode}`;
+              label.className = 'job-status-label error';
+            }
+            logsLoaded = false;
+            await Promise.all([loadStats(), loadArticles()]);
+          }
+        }, 1500);
+      } catch (_) {
+        label.textContent = 'Failed to start resend job.';
+        label.className = 'job-status-label error';
+      }
+    }
+
+    async function triggerSendNow(id, btn) {
+      if (!confirm('Are you sure you want to send this article to Discord now?')) return;
+      
+      const panel = document.getElementById('job-panel');
+      const label = document.getElementById('job-status-label');
+      const output = document.getElementById('job-output');
+
+      closeModal();
+      panel.classList.remove('hidden');
+      label.textContent = 'Starting…';
+      label.className = 'job-status-label running';
+      output.textContent = '';
+      
+      try {
+        const res = await fetch('/api/resend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ article_id: id })
+        });
+        
+        if (res.status === 409) {
+          label.textContent = 'A job is already running.';
+          label.className = 'job-status-label warn';
+          return;
+        }
+
+        label.textContent = 'Sending…';
+        if (jobPolling) clearInterval(jobPolling);
+        jobPolling = setInterval(async () => {
+          const st = await fetch('/api/job-status').then(r => r.json());
+          output.textContent = st.output.join('\n');
+          output.scrollTop = output.scrollHeight;
+          if (!st.running) {
+            clearInterval(jobPolling);
+            jobPolling = null;
+            if (st.returncode === 0) {
+              label.textContent = '✓ Sent successfully';
+              label.className = 'job-status-label done';
+            } else {
+              label.textContent = `✗ Exited with code ${st.returncode}`;
+              label.className = 'job-status-label error';
+            }
+            logsLoaded = false;
+            await Promise.all([loadStats(), loadArticles()]);
+          }
+        }, 1500);
+      } catch (_) {
+        label.textContent = 'Failed to start send job.';
+        label.className = 'job-status-label error';
       }
     }
 

@@ -3,12 +3,17 @@ import subprocess
 import sys
 import os
 import threading
-from flask import Flask, jsonify, render_template, request
-
-app = Flask(__name__)
 
 # Path to the DB — one level up from web/
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
+from flask import Flask, jsonify, render_template, request
+from config import MAX_ARTICLES_PER_RUN
+
+app = Flask(__name__)
+
 DB_PATH = os.path.join(BASE_DIR, "digest.db")
 MAIN_PY = os.path.join(BASE_DIR, "main.py")
 
@@ -27,7 +32,7 @@ def get_db():
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", max_articles_per_run=MAX_ARTICLES_PER_RUN)
 
 
 # ─── API: Stats ──────────────────────────────────────────────────────────────
@@ -135,10 +140,6 @@ def api_article_delete(article_id):
         conn.close()
         return jsonify({"error": "Cannot delete a sent article"}), 400
 
-    if row["summary"] and row["summary"].strip():
-        conn.close()
-        return jsonify({"error": "Cannot delete a summarized article"}), 400
-
     cur.execute("DELETE FROM articles WHERE id = ?", (article_id,))
     conn.commit()
     conn.close()
@@ -159,17 +160,27 @@ def api_run_logs():
 
 # ─── API: Trigger summarize job ──────────────────────────────────────────────
 
-def _run_job(mode):
+def _run_job(mode, articles_per_run=None, resummarize_id=None, resend_id=None):
     """Runs main.py with the given flag in a background thread."""
     flag_map = {
         "summarize": "--summarize-only",
         "fetch": "",           # full run
         "send": "--send-new-only",
+        "resummarize": None,
+        "resend": None,
     }
-    flag = flag_map.get(mode, "--summarize-only")
     cmd = [sys.executable, MAIN_PY]
-    if flag:
-        cmd.append(flag)
+    
+    if resummarize_id:
+        cmd.extend(["--resummarize-id", str(resummarize_id)])
+    elif resend_id:
+        cmd.extend(["--resend-id", str(resend_id)])
+    else:
+        flag = flag_map.get(mode, "--summarize-only")
+        if flag:
+            cmd.append(flag)
+        if articles_per_run is not None:
+            cmd.extend(["--articles-per-run", str(articles_per_run)])
 
     with _job_lock:
         _job_state["running"] = True
@@ -199,14 +210,45 @@ def _run_job(mode):
 def api_trigger():
     data = request.get_json(silent=True) or {}
     mode = data.get("mode", "summarize")
+    articles_per_run = data.get("articles_per_run", None)
 
     with _job_lock:
         if _job_state["running"]:
             return jsonify({"error": "A job is already running"}), 409
 
-    t = threading.Thread(target=_run_job, args=(mode,), daemon=True)
+    t = threading.Thread(target=_run_job, args=(mode, articles_per_run), daemon=True)
     t.start()
-    return jsonify({"status": "started", "mode": mode})
+    return jsonify({"status": "started", "mode": mode, "articles_per_run": articles_per_run})
+
+@app.route("/api/resummarize", methods=["POST"])
+def api_resummarize():
+    data = request.get_json(silent=True) or {}
+    article_id = data.get("article_id")
+    if not article_id:
+        return jsonify({"error": "Missing article_id"}), 400
+
+    with _job_lock:
+        if _job_state["running"]:
+            return jsonify({"error": "A job is already running"}), 409
+
+    t = threading.Thread(target=_run_job, args=("resummarize", None, article_id, None), daemon=True)
+    t.start()
+    return jsonify({"status": "started", "mode": "resummarize", "article_id": article_id})
+
+@app.route("/api/resend", methods=["POST"])
+def api_resend():
+    data = request.get_json(silent=True) or {}
+    article_id = data.get("article_id")
+    if not article_id:
+        return jsonify({"error": "Missing article_id"}), 400
+
+    with _job_lock:
+        if _job_state["running"]:
+            return jsonify({"error": "A job is already running"}), 409
+
+    t = threading.Thread(target=_run_job, args=("resend", None, None, article_id), daemon=True)
+    t.start()
+    return jsonify({"status": "started", "mode": "resend", "article_id": article_id})
 
 
 @app.route("/api/job-status")

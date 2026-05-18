@@ -245,6 +245,27 @@ a:hover { text-decoration: underline; }
 }
 .controls-row .btn { width: 100%; }
 
+.select-dropdown {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.88rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.select-dropdown:hover {
+  border-color: var(--border);
+  background: var(--surface-3);
+}
+.select-dropdown option {
+  background: var(--surface);
+  color: var(--text);
+}
+
 /* ── Job Console Panel ───────────────────────────────────── */
 .job-panel {
   margin-top: 12px;
