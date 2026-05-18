@@ -115,6 +115,15 @@ def get_unsummarized_articles(limit: int):
     conn.close()
     return [dict(row) for row in rows]
 
+def get_article_by_id(article_id: int):
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM articles WHERE id = ?", (article_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
 def save_summary(pmid: str, summary: str):
     conn = get_connection()
     cursor = conn.cursor()

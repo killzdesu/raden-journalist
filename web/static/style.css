@@ -119,7 +119,7 @@ a:hover { text-decoration: underline; }
 .page-wrap {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px 16px 80px;
+  padding: 20px 16px 40px;
   display: flex;
   flex-direction: column;
   gap: 28px;
@@ -253,6 +253,7 @@ a:hover { text-decoration: underline; }
   color: var(--text);
   font-family: var(--font);
   font-size: 0.88rem;
+  min-height: 44px;
   outline: none;
   cursor: pointer;
   transition: border-color .15s, background .15s;
@@ -606,7 +607,7 @@ a:hover { text-decoration: underline; }
   background: var(--surface-2);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
-  padding: 14px 16px;
+  padding: 16px;
 }
 .detail-block-label {
   font-size: .7rem;
@@ -648,7 +649,8 @@ a:hover { text-decoration: underline; }
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  padding-top: 4px;
+  gap: 8px;
+  padding-top: 12px;
   border-top: 1px solid var(--border-subtle);
 }
 .btn-danger {
@@ -677,7 +679,7 @@ a:hover { text-decoration: underline; }
   .brand-icon { font-size: 1.65rem; }
   .brand-title { font-size: 1.05rem; }
 
-  .page-wrap { padding: 28px 24px 64px; gap: 32px; }
+  .page-wrap { padding: 28px 24px 48px; gap: 32px; }
 
   .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
 
@@ -721,7 +723,7 @@ a:hover { text-decoration: underline; }
    DESKTOP  (≥ 1024px)
 ═══════════════════════════════════════════════════════════════ */
 @media (min-width: 1024px) {
-  .page-wrap { padding: 32px 24px 64px; gap: 36px; }
+  .page-wrap { padding: 32px 24px 48px; gap: 36px; }
 
   .stats-grid {
     grid-template-columns: repeat(5, 1fr);

@@ -2,7 +2,7 @@ import asyncio
 import logging
 import argparse
 import json
-from database.db import init_db, save_article, log_run, get_unsent_articles, mark_article_sent, get_unsummarized_articles, save_summary, update_article_type
+from database.db import init_db, save_article, log_run, get_unsent_articles, mark_article_sent, get_unsummarized_articles, save_summary, update_article_type, get_article_by_id
 from fetchers.pubmed import fetch_recent_articles
 from processors.filter import filter_new_articles
 from summarizer.llm import summarize_article, check_articles_relevance_batch, classify_article_type
@@ -24,12 +24,49 @@ async def main():
     parser.add_argument("--no-fetch", action="store_true", help="Process unsent articles from queue without fetching new ones")
     parser.add_argument("--summarize-only", action="store_true", help="Only summarize unsummarized articles in the queue")
     parser.add_argument("--send-new-only", action="store_true", help="Only send summarized but unsent articles")
+    parser.add_argument("--articles-per-run", type=int, default=MAX_ARTICLES_PER_RUN, help="Number of articles to process per run")
+    parser.add_argument("--resummarize-id", type=int, help="Resummarize a specific article by ID")
+    parser.add_argument("--resend-id", type=int, help="Resend a specific article by ID")
     args = parser.parse_args()
 
     logging.info("Starting Research Digest Run")
     init_db()
     
     try:
+        if args.resummarize_id:
+            logging.info(f"Resummarizing article ID: {args.resummarize_id}")
+            article = get_article_by_id(args.resummarize_id)
+            if not article:
+                logging.error("Article not found.")
+                return
+            
+            logging.info(f"Summarizing PMID: {article['pmid']}")
+            summary = await summarize_article(article)
+            if summary:
+                save_summary(article["pmid"], summary)
+                logging.info(f"Classifying article type for PMID: {article['pmid']}")
+                article_type = await classify_article_type(article, summary)
+                if article_type:
+                    update_article_type(article["pmid"], article_type)
+                    logging.info(f"Classified PMID: {article['pmid']} as {article_type}")
+                logging.info("Resummarization complete.")
+            else:
+                logging.error("Failed to generate summary.")
+            return
+
+        if args.resend_id:
+            logging.info(f"Resending article ID: {args.resend_id}")
+            article = get_article_by_id(args.resend_id)
+            if not article:
+                logging.error("Article not found.")
+                return
+            
+            summary = article.get("summary", "No summary available.")
+            await send_article(article, summary)
+            mark_article_sent(article["pmid"])
+            logging.info(f"Resent PMID: {article['pmid']}")
+            return
+
         all_articles_count = 0
         sent_count = 0
 
@@ -114,7 +151,7 @@ async def main():
 
         # Step 2: Summarizing
         if not args.send_new_only:
-            unsummarized = get_unsummarized_articles(MAX_ARTICLES_PER_RUN)
+            unsummarized = get_unsummarized_articles(args.articles_per_run)
             if unsummarized:
                 logging.info(f"Summarizing {len(unsummarized)} articles...")
                 for article in unsummarized:
@@ -132,7 +169,7 @@ async def main():
                         logging.warning(f"Failed to generate summary for PMID: {article['pmid']}")
                         
                 # Check LLM output logic
-                still_unsummarized = get_unsummarized_articles(MAX_ARTICLES_PER_RUN)
+                still_unsummarized = get_unsummarized_articles(args.articles_per_run)
                 failed_pmids = [a['pmid'] for a in still_unsummarized if a['pmid'] in [u['pmid'] for u in unsummarized]]
                 if failed_pmids:
                     logging.warning(f"Some articles failed to summarize and are still missing summaries: {failed_pmids}")
@@ -143,7 +180,7 @@ async def main():
 
         # Step 3: Sending
         if not args.summarize_only:
-            queued_articles = get_unsent_articles(MAX_ARTICLES_PER_RUN)
+            queued_articles = get_unsent_articles(args.articles_per_run)
             
             if not queued_articles:
                 logging.info("No unsent articles in queue.")
