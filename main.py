@@ -2,10 +2,10 @@ import asyncio
 import logging
 import argparse
 import json
-from database.db import init_db, save_article, log_run, get_unsent_articles, mark_article_sent, get_unsummarized_articles, save_summary
+from database.db import init_db, save_article, log_run, get_unsent_articles, mark_article_sent, get_unsummarized_articles, save_summary, update_article_type
 from fetchers.pubmed import fetch_recent_articles
 from processors.filter import filter_new_articles
-from summarizer.llm import summarize_article, check_articles_relevance_batch
+from summarizer.llm import summarize_article, check_articles_relevance_batch, classify_article_type
 from notifier.discord import send_header, send_article
 from config import MAX_ARTICLES_PER_RUN
 
@@ -122,6 +122,12 @@ async def main():
                     summary = await summarize_article(article)
                     if summary:
                         save_summary(article["pmid"], summary)
+                        
+                        logging.info(f"Classifying article type for PMID: {article['pmid']}")
+                        article_type = await classify_article_type(article, summary)
+                        if article_type:
+                            update_article_type(article["pmid"], article_type)
+                            logging.info(f"Classified PMID: {article['pmid']} as {article_type}")
                     else:
                         logging.warning(f"Failed to generate summary for PMID: {article['pmid']}")
                         

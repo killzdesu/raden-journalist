@@ -121,3 +121,10 @@ def save_summary(pmid: str, summary: str):
     cursor.execute("UPDATE articles SET summary = ? WHERE pmid = ?", (summary, pmid))
     conn.commit()
     conn.close()
+
+def update_article_type(pmid: str, article_type: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE articles SET article_type = ? WHERE pmid = ?", (article_type, pmid))
+    conn.commit()
+    conn.close()

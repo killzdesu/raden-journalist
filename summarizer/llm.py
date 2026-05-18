@@ -2,7 +2,11 @@ import logging
 import httpx
 import json
 import os
-from config import KKU_API_KEY, LLM_PROVIDER, LLM_MODEL, GEMINI_API_KEY, BACKUP_LLM_PROVIDER, BACKUP_LLM_MODEL, OPENROUTER_API_KEY
+from config import (
+    KKU_API_KEY, LLM_PROVIDER, LLM_MODEL, GEMINI_API_KEY, 
+    BACKUP_LLM_PROVIDER, BACKUP_LLM_MODEL, OPENROUTER_API_KEY,
+    SIMPLE_TASK_LLM_PROVIDER, SIMPLE_TASK_LLM_MODEL, SIMPLE_TASK_LLM_API_KEY
+)
 
 def build_prompt(article):
     return f"""Summarize the following medical research article for a clinical audience (allergists/immunologists).
@@ -107,17 +111,44 @@ async def check_articles_relevance_batch(articles):
         
     return []
 
-async def _call_kku(prompt: str):
-    if not KKU_API_KEY:
-        raise ValueError("KKU_API_KEY is not set")
+async def classify_article_type(article, summary):
+    prompt = f"""Based on the following article and its summary, classify the article type.
+Examples of article types include: Narrative review, RCT, Retrospective cohort, Case-control study, Observational study, Meta-analysis, Systematic review, etc.
+If you cannot identify the article type, just reply exactly with "Journal article".
+Respond ONLY with the article type and nothing else.
+
+Title: {article.get('title', 'Unknown')}
+Journal: {article.get('journal', 'Unknown')}
+Abstract:
+{article.get('abstract', 'No abstract available')}
+
+Summary:
+{summary}
+"""
+    
+    try:
+        if SIMPLE_TASK_LLM_PROVIDER == "openrouter":
+            return await _call_openrouter(prompt, model=SIMPLE_TASK_LLM_MODEL, api_key=SIMPLE_TASK_LLM_API_KEY)
+        elif SIMPLE_TASK_LLM_PROVIDER == "gemini":
+            return await _call_gemini(prompt, model=SIMPLE_TASK_LLM_MODEL, api_key=SIMPLE_TASK_LLM_API_KEY)
+        elif SIMPLE_TASK_LLM_PROVIDER == "kku":
+            return await _call_kku(prompt, model=SIMPLE_TASK_LLM_MODEL, api_key=SIMPLE_TASK_LLM_API_KEY)
+    except Exception as e:
+        logging.error(f"Classification failed: {e}")
+        
+    return "Journal article"
+
+async def _call_kku(prompt: str, model: str = LLM_MODEL, api_key: str = KKU_API_KEY):
+    if not api_key:
+        raise ValueError("KKU API key is not set")
         
     url = "https://gen.ai.kku.ac.th/api/v1/chat/completions"
     headers = {
-        "Authorization": f"Bearer {KKU_API_KEY}",
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
     payload = {
-        "model": LLM_MODEL,
+        "model": model,
         "messages": [
             {"role": "system", "content": "You are an allergy and immunology research assistant."},
             {"role": "user", "content": prompt}
@@ -131,11 +162,11 @@ async def _call_kku(prompt: str):
         data = resp.json()
         return data["choices"][0]["message"]["content"].strip()
 
-async def _call_gemini(prompt: str):
-    if not GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEY is not set")
+async def _call_gemini(prompt: str, model: str = LLM_MODEL, api_key: str = GEMINI_API_KEY):
+    if not api_key:
+        raise ValueError("Gemini API key is not set")
         
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{LLM_MODEL}:generateContent?key={GEMINI_API_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     payload = {
         "contents": [{
             "parts": [{"text": prompt}]
@@ -153,17 +184,17 @@ async def _call_gemini(prompt: str):
         except (KeyError, IndexError):
             raise Exception("Unexpected Gemini API response format")
 
-async def _call_openrouter(prompt: str):
-    if not OPENROUTER_API_KEY:
-        raise ValueError("OPENROUTER_API_KEY is not set")
+async def _call_openrouter(prompt: str, model: str = BACKUP_LLM_MODEL, api_key: str = OPENROUTER_API_KEY):
+    if not api_key:
+        raise ValueError("OpenRouter API key is not set")
         
     headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Authorization": f"Bearer {api_key}",
         # "HTTP-Referer": "https://journal-reader.local",
         "X-Title": "Journal Reader Bot"
     }
     payload = {
-        "model": BACKUP_LLM_MODEL,
+        "model": model,
         "messages": [
             {"role": "user", "content": prompt}
         ],
