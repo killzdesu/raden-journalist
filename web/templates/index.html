@@ -446,10 +446,8 @@
           ${a.abstract ? `<div class="detail-block"><div class="detail-block-label">Abstract</div><div class="detail-block-text">${escHtml(a.abstract)}</div></div>` : ''}
           ${a.summary ? `<div class="detail-block"><div class="detail-block-label">AI Summary</div><div class="detail-block-text summary-text">${marked.parse(a.summary.trim())}</div></div>` : '<div class="detail-block muted">No summary generated yet.</div>'}
           <div class="modal-actions">
-            <button id="btn-favorite-toggle" class="btn btn-favorite ${a.favorited ? 'is-favorited' : ''}" onclick="event.stopPropagation(); toggleFavorite(${a.id}, this)">
-              ${a.favorited
-                ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Remove from Favorites`
-                : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Add to Favorites`}
+            <button id="btn-favorite-toggle" class="btn btn-favorite" onclick="event.stopPropagation(); toggleFavorite(${a.id}, this)">
+              ${favBtnHtml(a.favorited)}
             </button>
             ${a.sent ? `
             <button class="btn btn-primary" onclick="event.stopPropagation(); triggerResend(${a.id}, this)">
@@ -485,15 +483,20 @@
       setTimeout(() => overlay.classList.add('hidden'), 250);
     }
 
+    function favBtnHtml(favorited) {
+      if (favorited) {
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Remove from Favorites';
+      }
+      return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Add to Favorites';
+    }
+
     async function toggleFavorite(id, btn) {
       btn.disabled = true;
       try {
         const data = await fetch(`/api/articles/${id}/favorite`, { method: 'POST' }).then(r => r.json());
         const favorited = data.favorited === 1;
         btn.className = `btn btn-favorite ${favorited ? 'is-favorited' : ''}`;
-        btn.innerHTML = favorited
-          ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Remove from Favorites`
-          : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Add to Favorites`;
+        btn.innerHTML = favBtnHtml(favorited);
         // Refresh list and stats silently in background
         await Promise.all([loadStats(), loadArticles()]);
       } catch (_) { } finally {
