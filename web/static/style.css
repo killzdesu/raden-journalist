@@ -680,10 +680,26 @@ a:hover { text-decoration: underline; }
 /* ── Modal Actions ───────────────────────────────────────── */
 .modal-actions {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
   gap: 8px;
   padding-top: 12px;
   border-top: 1px solid var(--border-subtle);
+}
+.modal-actions .btn {
+  width: 100%;
+  justify-content: center;
+}
+.modal-actions .btn-primary {
+  order: -2;
+}
+.modal-actions .btn-favorite {
+  order: -1;
+}
+.modal-actions .btn-secondary {
+  order: 0;
+}
+.modal-actions .btn-danger {
+  order: 1;
 }
 .btn-danger {
   background: var(--rose-dim);
@@ -749,6 +765,15 @@ a:hover { text-decoration: underline; }
   }
   .modal-header { padding: 20px 24px 16px; }
   .modal-body { padding: 20px 24px 28px; }
+
+  .modal-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+  .modal-actions .btn {
+    width: auto;
+    order: 0;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
