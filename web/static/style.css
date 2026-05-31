@@ -623,6 +623,38 @@ a:hover { text-decoration: underline; }
   line-height: 1.7;
   white-space: pre-wrap;
 }
+
+/* Collapsible Abstract */
+.abstract-collapsible summary {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+.abstract-collapsible summary::-webkit-details-marker {
+  display: none;
+}
+.abstract-collapsible .chevron-icon {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-muted);
+}
+.abstract-collapsible[open] .chevron-icon {
+  transform: rotate(180deg);
+}
+.abstract-collapsible:not([open]) summary {
+  margin-bottom: 0;
+}
+.abstract-collapsible summary:focus-visible {
+  outline: 2px solid var(--teal);
+  border-radius: 4px;
+}
+[data-theme="night-raden"] .abstract-collapsible summary:focus-visible {
+  outline-color: var(--nr-primary);
+}
+
 .summary-text {
   color: #c9d5e3;
   border-left: 3px solid var(--teal);

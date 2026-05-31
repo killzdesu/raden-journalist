@@ -432,6 +432,35 @@
         const a = await fetch(`/api/articles/${id}`).then(r => r.json());
         document.getElementById('modal-title').textContent = a.title || 'Article Detail';
 
+        const hasSummary = a.summary && a.summary.trim();
+        const summaryHtml = hasSummary 
+          ? `<div class="detail-block"><div class="detail-block-label">AI Summary</div><div class="detail-block-text summary-text">${marked.parse(a.summary.trim())}</div></div>` 
+          : '<div class="detail-block muted">No summary generated yet.</div>';
+
+        let abstractHtml = '';
+        if (a.abstract) {
+          if (hasSummary) {
+            abstractHtml = `
+              <details class="detail-block abstract-collapsible">
+                <summary class="detail-block-label">
+                  <span>Abstract</span>
+                  <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </summary>
+                <div class="detail-block-text" style="margin-top: 12px;">${escHtml(a.abstract)}</div>
+              </details>
+            `;
+          } else {
+            abstractHtml = `
+              <div class="detail-block">
+                <div class="detail-block-label">Abstract</div>
+                <div class="detail-block-text">${escHtml(a.abstract)}</div>
+              </div>
+            `;
+          }
+        }
+
+        const blocksHtml = hasSummary ? (summaryHtml + abstractHtml) : (abstractHtml + summaryHtml);
+
         body.innerHTML = `
           <div class="detail-meta">
             ${metaRow('Journal', a.journal)}
@@ -443,8 +472,7 @@
             ${metaRow('DOI', a.doi ? `<a href="https://doi.org/${escHtml(a.doi)}" target="_blank" rel="noopener" class="ext-link">doi.org/${escHtml(a.doi)} ↗</a>` : null, true)}
             ${metaRow('Status', (a.sent ? '<span class="badge badge-sent">Sent</span>' : '<span class="badge badge-unsent">Not Sent</span>'), true)}
           </div>
-          ${a.abstract ? `<div class="detail-block"><div class="detail-block-label">Abstract</div><div class="detail-block-text">${escHtml(a.abstract)}</div></div>` : ''}
-          ${a.summary ? `<div class="detail-block"><div class="detail-block-label">AI Summary</div><div class="detail-block-text summary-text">${marked.parse(a.summary.trim())}</div></div>` : '<div class="detail-block muted">No summary generated yet.</div>'}
+          ${blocksHtml}
           <div class="modal-actions">
             <button id="btn-favorite-toggle" class="btn btn-favorite" onclick="event.stopPropagation(); toggleFavorite(${a.id}, this)">
               ${favBtnHtml(a.favorited)}
