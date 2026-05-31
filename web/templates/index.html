@@ -431,7 +431,6 @@
       try {
         const a = await fetch(`/api/articles/${id}`).then(r => r.json());
         document.getElementById('modal-title').textContent = a.title || 'Article Detail';
-        const canDelete = !a.sent;
 
         body.innerHTML = `
           <div class="detail-meta">
@@ -467,7 +466,7 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 22v-6h6"/></svg>
               Resummarize
             </button>
-            ${canDelete ? `<button class="btn btn-danger" onclick="event.stopPropagation(); deleteArticle(${a.id}, this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Remove</button>` : ''}
+            `<button class="btn btn-danger" onclick="event.stopPropagation(); deleteArticle(${a.id}, this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Remove</button>`
           </div>
         `;
       } catch (_) {
@@ -750,14 +749,14 @@
     }
 
     async function deleteArticle(id, btn) {
-      if (!confirm('Remove this unsummarized article from the database?')) return;
+      if (!confirm('Remove this article from the database?')) return;
       if (btn) { btn.disabled = true; btn.textContent = 'Removing…'; }
       try {
         const res = await fetch(`/api/articles/${id}`, { method: 'DELETE' });
         const data = await res.json();
         if (!res.ok) {
           alert(data.error || 'Failed to delete article.');
-          if (btn) { btn.disabled = false; btn.textContent = 'Remove Article'; }
+          if (btn) { btn.disabled = false; btn.textContent = 'Remove'; }
           return;
         }
         closeModal();

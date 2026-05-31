@@ -184,19 +184,11 @@ def api_article_toggle_favorite(article_id):
 def api_article_delete(article_id):
     conn = get_db()
     cur = conn.cursor()
-    # Only allow deleting unsummarized articles
-    cur.execute(
-        "SELECT id, summary, sent FROM articles WHERE id = ?", (article_id,)
-    )
+    cur.execute("SELECT id FROM articles WHERE id = ?", (article_id,))
     row = cur.fetchone()
     if not row:
         conn.close()
         return jsonify({"error": "Not found"}), 404
-
-    if row["sent"]:
-        conn.close()
-        return jsonify({"error": "Cannot delete a sent article"}), 400
-
     cur.execute("DELETE FROM articles WHERE id = ?", (article_id,))
     conn.commit()
     conn.close()
