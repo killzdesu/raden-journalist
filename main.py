@@ -27,6 +27,7 @@ async def main():
     parser.add_argument("--articles-per-run", type=int, default=MAX_ARTICLES_PER_RUN, help="Number of articles to process per run")
     parser.add_argument("--resummarize-id", type=int, help="Resummarize a specific article by ID")
     parser.add_argument("--resend-id", type=int, help="Resend a specific article by ID")
+    parser.add_argument("--fetch-only", action="store_true", help="Only fetch articles without summarizing or sending them")
     args = parser.parse_args()
 
     logging.info("Starting Research Digest Run")
@@ -150,7 +151,7 @@ async def main():
             logging.info("Skipping fetch phase.")
 
         # Step 2: Summarizing
-        if not args.send_new_only:
+        if not args.send_new_only and not args.fetch_only:
             unsummarized = get_unsummarized_articles(args.articles_per_run)
             if unsummarized:
                 logging.info(f"Summarizing {len(unsummarized)} articles...")
@@ -179,7 +180,7 @@ async def main():
             logging.info("Skipping summarize phase.")
 
         # Step 3: Sending
-        if not args.summarize_only:
+        if not args.summarize_only and not args.fetch_only:
             queued_articles = get_unsent_articles(args.articles_per_run)
             
             if not queued_articles:
@@ -206,7 +207,7 @@ async def main():
             logging.info("Skipping send phase.")
             
         status = "success"
-        if args.no_fetch or args.summarize_only or args.send_new_only:
+        if args.no_fetch or args.summarize_only or args.send_new_only or args.fetch_only:
             status += " (partial run)"
         log_run(all_articles_count, sent_count, status)
         
