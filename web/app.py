@@ -17,6 +17,22 @@ app = Flask(__name__)
 DB_PATH = os.path.join(BASE_DIR, "digest.db")
 MAIN_PY = os.path.join(BASE_DIR, "main.py")
 
+# Ensure article_favorites table exists (created here so the web server
+# doesn't depend on init_db() having been called by the pipeline).
+def _ensure_schema():
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS article_favorites (
+            article_id INTEGER PRIMARY KEY,
+            created_at DATETIME,
+            FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+_ensure_schema()
+
 # Track running job state
 _job_state = {"running": False, "output": [], "returncode": None}
 _job_lock = threading.Lock()
@@ -57,6 +73,9 @@ def api_stats():
     cur.execute("SELECT COUNT(*) FROM articles WHERE sent = 1")
     sent = cur.fetchone()[0]
 
+    cur.execute("SELECT COUNT(*) FROM article_favorites")
+    favorites = cur.fetchone()[0]
+
     conn.close()
     return jsonify({
         "total": total,
@@ -64,6 +83,7 @@ def api_stats():
         "ready_to_send": ready_to_send,
         "unsummarized": unsummarized,
         "sent": sent,
+        "favorites": favorites,
     })
 
 
@@ -87,20 +107,25 @@ def api_articles():
         where_clause = "WHERE sent = 0 AND (summary IS NULL OR summary = '')"
     elif filter_by == "sent":
         where_clause = "WHERE sent = 1"
+    elif filter_by == "favorites":
+        where_clause = "WHERE af.article_id IS NOT NULL"
 
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute(f"SELECT COUNT(*) FROM articles {where_clause}")
+    cur.execute(f"SELECT COUNT(*) FROM articles LEFT JOIN article_favorites af ON articles.id = af.article_id {where_clause}")
     total_count = cur.fetchone()[0]
 
     cur.execute(
-        f"""SELECT id, pmid, doi, title, journal, pub_date, fetched_at,
+        f"""SELECT articles.id, pmid, doi, title, journal, pub_date, fetched_at,
                    authors, article_type, journal_pool,
                    sent,
+                   CASE WHEN af.article_id IS NOT NULL THEN 1 ELSE 0 END AS favorited,
                    CASE WHEN summary IS NOT NULL AND summary != '' THEN 1 ELSE 0 END AS has_summary
-            FROM articles {where_clause}
-            ORDER BY pub_date {order}, id {order}
+            FROM articles
+            LEFT JOIN article_favorites af ON articles.id = af.article_id
+            {where_clause}
+            ORDER BY pub_date {order}, articles.id {order}
             LIMIT ? OFFSET ?""",
         (per_page, offset),
     )
@@ -115,12 +140,44 @@ def api_articles():
 def api_article_detail(article_id):
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM articles WHERE id = ?", (article_id,))
+    cur.execute(
+        """SELECT articles.*,
+                  CASE WHEN af.article_id IS NOT NULL THEN 1 ELSE 0 END AS favorited
+           FROM articles
+           LEFT JOIN article_favorites af ON articles.id = af.article_id
+           WHERE articles.id = ?""",
+        (article_id,)
+    )
     row = cur.fetchone()
     conn.close()
     if not row:
         return jsonify({"error": "Not found"}), 404
     return jsonify(dict(row))
+
+
+@app.route("/api/articles/<int:article_id>/favorite", methods=["POST"])
+def api_article_toggle_favorite(article_id):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM articles WHERE id = ?", (article_id,))
+    if not cur.fetchone():
+        conn.close()
+        return jsonify({"error": "Not found"}), 404
+    cur.execute("SELECT article_id FROM article_favorites WHERE article_id = ?", (article_id,))
+    already_favorited = cur.fetchone() is not None
+    if already_favorited:
+        cur.execute("DELETE FROM article_favorites WHERE article_id = ?", (article_id,))
+        new_val = 0
+    else:
+        from datetime import datetime
+        cur.execute(
+            "INSERT INTO article_favorites (article_id, created_at) VALUES (?, ?)",
+            (article_id, datetime.utcnow().isoformat())
+        )
+        new_val = 1
+    conn.commit()
+    conn.close()
+    return jsonify({"favorited": new_val})
 
 
 @app.route("/api/articles/<int:article_id>", methods=["DELETE"])

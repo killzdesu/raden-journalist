@@ -39,6 +39,14 @@ def init_db():
         cursor.execute("ALTER TABLE articles ADD COLUMN summary TEXT")
     
     cursor.execute('''
+        CREATE TABLE IF NOT EXISTS article_favorites (
+            article_id INTEGER PRIMARY KEY,
+            created_at DATETIME,
+            FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE
+        )
+    ''')
+
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS run_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             run_date TEXT,

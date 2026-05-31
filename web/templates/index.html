@@ -184,6 +184,7 @@
             <button class="pill" data-filter="ready" onclick="setFilter('ready', this)">Ready</button>
             <button class="pill" data-filter="unsummarized" onclick="setFilter('unsummarized', this)">Pending</button>
             <button class="pill" data-filter="sent" onclick="setFilter('sent', this)">Sent</button>
+            <button class="pill pill-favorites" data-filter="favorites" onclick="setFilter('favorites', this)">★ Favorites<span class="pill-count" id="pill-count-favorites"></span></button>
           </div>
           <button id="btn-sort" class="btn btn-ghost btn-sm sort-btn" onclick="toggleSort()" title="Toggle sort order">
             <svg id="sort-icon-desc" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -310,6 +311,8 @@
         setText('val-ready', data.ready_to_send);
         setText('val-not-sent', data.not_sent);
         setText('val-sent', data.sent);
+        const favCount = document.getElementById('pill-count-favorites');
+        if (favCount) favCount.textContent = data.favorites > 0 ? ` ${data.favorites}` : '';
       } catch (_) { }
     }
 
@@ -366,7 +369,7 @@
       tbody.innerHTML = articles.map(a => `
         <tr class="article-row" onclick="openArticle(${a.id})" tabindex="0" role="button" aria-label="View: ${escHtml(a.title || '')}">
           <td class="col-title">
-            <span class="title-text">${escHtml(a.title || '—')}</span>
+            ${a.favorited ? '<span class="star-fav" title="Favorited">★</span> ' : ''}<span class="title-text">${escHtml(a.title || '—')}</span>
             ${a.pmid ? `<span class="pmid-badge">PMID ${escHtml(a.pmid)}</span>` : ''}
           </td>
           <td class="col-journal">${escHtml(a.journal || '—')}</td>
@@ -379,7 +382,7 @@
       // Card list (mobile)
       cards.innerHTML = articles.map(a => `
         <div class="article-card" onclick="openArticle(${a.id})" tabindex="0" role="button" aria-label="View: ${escHtml(a.title || '')}">
-          <div class="card-title">${escHtml(a.title || '—')}</div>
+          <div class="card-title">${a.favorited ? '<span class="star-fav">★</span> ' : ''}${escHtml(a.title || '—')}</div>
           <div class="card-meta">
             <span>${escHtml(a.journal || '—')}</span>
             <span class="card-meta-sep">·</span>
@@ -444,6 +447,11 @@
           ${a.abstract ? `<div class="detail-block"><div class="detail-block-label">Abstract</div><div class="detail-block-text">${escHtml(a.abstract)}</div></div>` : ''}
           ${a.summary ? `<div class="detail-block"><div class="detail-block-label">AI Summary</div><div class="detail-block-text summary-text">${marked.parse(a.summary.trim())}</div></div>` : '<div class="detail-block muted">No summary generated yet.</div>'}
           <div class="modal-actions">
+            <button id="btn-favorite-toggle" class="btn btn-favorite ${a.favorited ? 'is-favorited' : ''}" onclick="event.stopPropagation(); toggleFavorite(${a.id}, this)">
+              ${a.favorited
+                ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Remove from Favorites`
+                : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Add to Favorites`}
+            </button>
             ${a.sent ? `
             <button class="btn btn-primary" onclick="event.stopPropagation(); triggerResend(${a.id}, this)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
@@ -476,6 +484,22 @@
       const overlay = document.getElementById('modal-overlay');
       overlay.classList.remove('visible');
       setTimeout(() => overlay.classList.add('hidden'), 250);
+    }
+
+    async function toggleFavorite(id, btn) {
+      btn.disabled = true;
+      try {
+        const data = await fetch(`/api/articles/${id}/favorite`, { method: 'POST' }).then(r => r.json());
+        const favorited = data.favorited === 1;
+        btn.className = `btn btn-favorite ${favorited ? 'is-favorited' : ''}`;
+        btn.innerHTML = favorited
+          ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Remove from Favorites`
+          : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Add to Favorites`;
+        // Refresh list and stats silently in background
+        await Promise.all([loadStats(), loadArticles()]);
+      } catch (_) { } finally {
+        btn.disabled = false;
+      }
     }
 
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
