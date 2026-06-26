@@ -11,6 +11,8 @@ if BASE_DIR not in sys.path:
 
 from flask import Flask, jsonify, render_template, request
 from config import MAX_ARTICLES_PER_RUN
+from database.db import init_db
+
 
 app = Flask(__name__)
 
@@ -32,6 +34,7 @@ def _ensure_schema():
     conn.close()
 
 _ensure_schema()
+init_db()
 
 # Track running job state
 _job_state = {"running": False, "output": [], "returncode": None}
@@ -125,7 +128,7 @@ def api_articles():
             FROM articles
             LEFT JOIN article_favorites af ON articles.id = af.article_id
             {where_clause}
-            ORDER BY pub_date {order}, articles.id {order}
+            ORDER BY pub_date_sort {order}, articles.id {order}
             LIMIT ? OFFSET ?""",
         (per_page, offset),
     )

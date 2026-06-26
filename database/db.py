@@ -1,6 +1,41 @@
 import sqlite3
 import os
+import re
 from datetime import datetime
+
+MONTH_MAP = {
+    "jan": "01", "feb": "02", "mar": "03", "apr": "04", "may": "05", "jun": "06",
+    "jul": "07", "aug": "08", "sep": "09", "oct": "10", "nov": "11", "dec": "12",
+}
+
+def normalize_pub_date(pub_date_str):
+    if not pub_date_str:
+        return "1970-01-01"
+    
+    # Try to extract a 4-digit year
+    year_match = re.search(r'\b(19\d\d|20\d\d)\b', pub_date_str)
+    if not year_match:
+        return "1970-01-01"
+    year = year_match.group(1)
+    
+    # Try to extract a month name
+    month = "01"
+    words = re.findall(r'[a-zA-Z]+', pub_date_str)
+    for word in words:
+        prefix = word[:3].lower()
+        if prefix in MONTH_MAP:
+            month = MONTH_MAP[prefix]
+            break
+            
+    # Try to extract a day
+    day = "01"
+    temp_str = pub_date_str.replace(year, "", 1)
+    day_match = re.search(r'\b([1-9]|0[1-9]|[12]\d|3[01])\b', temp_str)
+    if day_match:
+        day = f"{int(day_match.group(1)):02d}"
+        
+    return f"{year}-{month}-{day}"
+
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "digest.db")
 
@@ -37,6 +72,16 @@ def init_db():
         cursor.execute("ALTER TABLE articles ADD COLUMN journal_pool TEXT")
     if 'summary' not in columns:
         cursor.execute("ALTER TABLE articles ADD COLUMN summary TEXT")
+    if 'pub_date_sort' not in columns:
+        cursor.execute("ALTER TABLE articles ADD COLUMN pub_date_sort TEXT")
+        # Backfill existing records
+        cursor.execute("SELECT id, pub_date FROM articles")
+        rows = cursor.fetchall()
+        for r_id, p_date in rows:
+            cursor.execute(
+                "UPDATE articles SET pub_date_sort = ? WHERE id = ?",
+                (normalize_pub_date(p_date), r_id)
+            )
     
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS article_favorites (
@@ -75,11 +120,12 @@ def save_article(pmid: str, doi: str, title: str, journal: str, pub_date: str, a
     conn = get_connection()
     cursor = conn.cursor()
     now = datetime.utcnow().isoformat()
+    pub_date_sort = normalize_pub_date(pub_date)
     try:
         cursor.execute('''
-            INSERT INTO articles (pmid, doi, title, journal, pub_date, abstract, authors, article_type, journal_pool, fetched_at, sent)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
-        ''', (pmid, doi, title, journal, pub_date, abstract, authors, article_type, journal_pool, now))
+            INSERT INTO articles (pmid, doi, title, journal, pub_date, pub_date_sort, abstract, authors, article_type, journal_pool, fetched_at, sent)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+        ''', (pmid, doi, title, journal, pub_date, pub_date_sort, abstract, authors, article_type, journal_pool, now))
         conn.commit()
     except sqlite3.IntegrityError:
         pass # Already exists
@@ -109,7 +155,7 @@ def get_unsent_articles(limit: int):
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM articles WHERE sent = 0 AND summary IS NOT NULL AND summary != '' ORDER BY pub_date ASC, id ASC LIMIT ?", (limit,))
+    cursor.execute("SELECT * FROM articles WHERE sent = 0 AND summary IS NOT NULL AND summary != '' ORDER BY pub_date_sort ASC, id ASC LIMIT ?", (limit,))
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
@@ -118,7 +164,7 @@ def get_unsummarized_articles(limit: int):
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM articles WHERE sent = 0 AND (summary IS NULL OR summary = '') ORDER BY pub_date ASC, id ASC LIMIT ?", (limit,))
+    cursor.execute("SELECT * FROM articles WHERE sent = 0 AND (summary IS NULL OR summary = '') ORDER BY pub_date_sort ASC, id ASC LIMIT ?", (limit,))
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
