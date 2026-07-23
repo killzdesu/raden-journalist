@@ -493,7 +493,49 @@ a:hover { text-decoration: underline; }
   color: var(--text-muted);
   flex-wrap: wrap;
 }
-.pg-info { flex: 1; font-family: var(--font-mono); font-size: .76rem; }
+.pg-info { flex: 1; font-family: var(--font-mono); font-size: .76rem; display: flex; align-items: center; gap: 6px; }
+.pg-input {
+  width: 48px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  text-align: center;
+  outline: none;
+}
+.pg-input:focus { border-color: var(--teal); }
+
+.search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.search-input {
+  padding: 6px 12px 6px 30px;
+  border-radius: 20px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: .78rem;
+  outline: none;
+  transition: border-color .15s, background .15s;
+  width: 160px;
+}
+.search-input:focus {
+  border-color: var(--teal);
+  background: var(--surface);
+}
+.search-icon {
+  position: absolute;
+  left: 10px;
+  pointer-events: none;
+  color: var(--text-muted);
+}
 
 /* ── Modal ───────────────────────────────────────────────── */
 .modal-overlay {

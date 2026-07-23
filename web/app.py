@@ -96,27 +96,42 @@ def api_stats():
 def api_articles():
     filter_by = request.args.get("filter", "all")  # all | not_sent | ready | unsummarized | sent
     sort_dir  = request.args.get("sort", "desc")    # desc = latest first, asc = oldest first
+    search_q  = request.args.get("q", "").strip()
     order     = "DESC" if sort_dir != "asc" else "ASC"
     page = int(request.args.get("page", 1))
     per_page = 20
     offset = (page - 1) * per_page
 
-    where_clause = ""
+    where_conditions = []
+    params = []
+
     if filter_by == "not_sent":
-        where_clause = "WHERE sent = 0"
+        where_conditions.append("sent = 0")
     elif filter_by == "ready":
-        where_clause = "WHERE sent = 0 AND summary IS NOT NULL AND summary != ''"
+        where_conditions.append("sent = 0 AND summary IS NOT NULL AND summary != ''")
     elif filter_by == "unsummarized":
-        where_clause = "WHERE sent = 0 AND (summary IS NULL OR summary = '')"
+        where_conditions.append("sent = 0 AND (summary IS NULL OR summary = '')")
     elif filter_by == "sent":
-        where_clause = "WHERE sent = 1"
+        where_conditions.append("sent = 1")
     elif filter_by == "favorites":
-        where_clause = "WHERE af.article_id IS NOT NULL"
+        where_conditions.append("af.article_id IS NOT NULL")
+
+    if search_q:
+        where_conditions.append("(title LIKE ? OR authors LIKE ? OR journal LIKE ? OR pmid LIKE ?)")
+        pattern = f"%{search_q}%"
+        params.extend([pattern, pattern, pattern, pattern])
+
+    where_clause = ""
+    if where_conditions:
+        where_clause = "WHERE " + " AND ".join(where_conditions)
 
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute(f"SELECT COUNT(*) FROM articles LEFT JOIN article_favorites af ON articles.id = af.article_id {where_clause}")
+    cur.execute(
+        f"SELECT COUNT(*) FROM articles LEFT JOIN article_favorites af ON articles.id = af.article_id {where_clause}",
+        params,
+    )
     total_count = cur.fetchone()[0]
 
     cur.execute(
@@ -130,12 +145,13 @@ def api_articles():
             {where_clause}
             ORDER BY pub_date_sort {order}, articles.id {order}
             LIMIT ? OFFSET ?""",
-        (per_page, offset),
+        params + [per_page, offset],
     )
     rows = [dict(r) for r in cur.fetchall()]
     conn.close()
 
     return jsonify({"articles": rows, "total": total_count, "page": page, "per_page": per_page})
+
 
 
 

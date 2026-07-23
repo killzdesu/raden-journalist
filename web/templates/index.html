@@ -186,6 +186,13 @@
             <button class="pill" data-filter="sent" onclick="setFilter('sent', this)">Sent</button>
             <button class="pill pill-favorites" data-filter="favorites" onclick="setFilter('favorites', this)">★ Favorites<span class="pill-count" id="pill-count-favorites"></span></button>
           </div>
+          <div class="search-input-wrap">
+            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="search-input" class="search-input" placeholder="Search..." oninput="onSearchInput(this.value)" />
+          </div>
           <button id="btn-sort" class="btn btn-ghost btn-sm sort-btn" onclick="toggleSort()" title="Toggle sort order">
             <svg id="sort-icon-desc" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2">
@@ -272,9 +279,12 @@
     let currentFilter = 'all';
     let currentPage = 1;
     let currentSort = 'desc';
+    let currentSearch = '';
+    let searchDebounce = null;
     let jobPolling = null;
     let currentTab = 'dashboard';
     let logsLoaded = false;
+    let isModalOpen = false;
 
     document.addEventListener('DOMContentLoaded', () => {
       refreshAll();
@@ -282,6 +292,15 @@
         if (e.target === this) closeModal();
       });
     });
+
+    function onSearchInput(val) {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => {
+        currentSearch = val.trim();
+        currentPage = 1;
+        loadArticles();
+      }, 300);
+    }
 
     async function refreshAll() {
       const btn = document.getElementById('btn-refresh');
@@ -346,7 +365,8 @@
       tbody.innerHTML = '<tr><td colspan="6" class="loading-cell">Loading…</td></tr>';
       cards.innerHTML = '<div class="cards-empty">Loading…</div>';
       try {
-        const data = await fetch(`/api/articles?filter=${currentFilter}&page=${currentPage}&sort=${currentSort}`).then(r => r.json());
+        const url = `/api/articles?filter=${currentFilter}&page=${currentPage}&sort=${currentSort}&q=${encodeURIComponent(currentSearch)}`;
+        const data = await fetch(url).then(r => r.json());
         renderArticles(data);
       } catch (_) {
         tbody.innerHTML = '<tr><td colspan="6" class="loading-cell error">Failed to load.</td></tr>';
@@ -413,18 +433,33 @@
       const pages = Math.ceil(total / per_page);
       const pg = document.getElementById('pagination');
       if (pages <= 1) { pg.innerHTML = ''; return; }
-      let html = `<span class="pg-info">${page}/${pages} · ${total} articles</span>`;
-      if (page > 1) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${page - 1})">← Prev</button>`;
-      if (page < pages) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${page + 1})">Next →</button>`;
+      let html = `<span class="pg-info">
+        Page <input type="number" class="pg-input" min="1" max="${pages}" value="${page}" onchange="goPage(this.value, ${pages})" onkeydown="if(event.key==='Enter') goPage(this.value, ${pages})" /> / ${pages} · ${total} articles
+      </span>`;
+      if (page > 1) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${page - 1}, ${pages})">← Prev</button>`;
+      if (page < pages) html += `<button class="btn btn-ghost btn-sm" onclick="goPage(${page + 1}, ${pages})">Next →</button>`;
       pg.innerHTML = html;
     }
 
-    function goPage(p) { currentPage = p; loadArticles(); }
+    function goPage(p, maxPages) {
+      let pageNum = parseInt(p, 10);
+      if (isNaN(pageNum) || pageNum < 1) pageNum = 1;
+      if (maxPages && pageNum > maxPages) pageNum = maxPages;
+      if (pageNum === currentPage) return;
+      currentPage = pageNum;
+      loadArticles();
+    }
 
     async function openArticle(id) {
       const overlay = document.getElementById('modal-overlay');
       const body = document.getElementById('modal-body');
       body.innerHTML = '<div class="modal-loading">Loading…</div>';
+      
+      if (!isModalOpen) {
+        isModalOpen = true;
+        history.pushState({ modal: true }, '', '');
+      }
+
       overlay.classList.remove('hidden');
       requestAnimationFrame(() => overlay.classList.add('visible'));
 
@@ -505,11 +540,26 @@
       return `<div class="meta-row"><span class="meta-label">${label}</span><span class="meta-value">${raw ? value : escHtml(value)}</span></div>`;
     }
 
-    function closeModal() {
+    function _hideModalOverlay() {
+      isModalOpen = false;
       const overlay = document.getElementById('modal-overlay');
       overlay.classList.remove('visible');
       setTimeout(() => overlay.classList.add('hidden'), 250);
     }
+
+    function closeModal() {
+      if (isModalOpen) {
+        history.back();
+      } else {
+        _hideModalOverlay();
+      }
+    }
+
+    window.addEventListener('popstate', (e) => {
+      if (isModalOpen) {
+        _hideModalOverlay();
+      }
+    });
 
     function favBtnHtml(favorited) {
       if (favorited) {
