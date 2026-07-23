@@ -9,7 +9,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_from_directory
 from config import MAX_ARTICLES_PER_RUN
 from database.db import init_db
 
@@ -52,6 +52,14 @@ def get_db():
 @app.route("/")
 def index():
     return render_template("index.html", max_articles_per_run=MAX_ARTICLES_PER_RUN)
+
+@app.route("/sw.js")
+def service_worker():
+    return send_from_directory("static", "sw.js", mimetype="application/javascript")
+
+@app.route("/manifest.json")
+def manifest():
+    return send_from_directory("static", "manifest.json", mimetype="application/json")
 
 
 # ─── API: Stats ──────────────────────────────────────────────────────────────

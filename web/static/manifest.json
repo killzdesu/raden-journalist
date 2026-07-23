@@ -1,0 +1,23 @@
+{
+  "name": "Raden Digest",
+  "short_name": "Raden",
+  "description": "Monitor your daily research article pipeline: pending summaries, sent articles, and run history.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/static/raden-favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/raden-favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

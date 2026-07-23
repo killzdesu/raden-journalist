@@ -8,6 +8,9 @@
   <meta name="description"
     content="Monitor your daily research article pipeline: pending summaries, sent articles, and run history." />
   <link rel="icon" type="image/png" href="/static/raden-favicon.png" />
+  <link rel="apple-touch-icon" href="/static/raden-favicon.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#0f172a" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -291,6 +294,11 @@
       document.getElementById('modal-overlay').addEventListener('click', function (e) {
         if (e.target === this) closeModal();
       });
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(err => {
+          console.error('ServiceWorker registration failed:', err);
+        });
+      }
     });
 
     function onSearchInput(val) {
