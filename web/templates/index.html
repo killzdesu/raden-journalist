@@ -181,7 +181,7 @@
       <div class="section-head">
         <h2 class="section-title">Articles</h2>
         <div class="table-controls">
-          <div class="filter-pills" id="filter-pills">
+          <div class="filter-pills" id="filter-pills" role="toolbar" aria-label="Article filters">
             <button class="pill active" data-filter="all" onclick="setFilter('all', this)">All</button>
             <button class="pill" data-filter="not_sent" onclick="setFilter('not_sent', this)">Unsent</button>
             <button class="pill" data-filter="ready" onclick="setFilter('ready', this)">Ready</button>
@@ -189,26 +189,26 @@
             <button class="pill" data-filter="sent" onclick="setFilter('sent', this)">Sent</button>
             <button class="pill pill-favorites" data-filter="favorites" onclick="setFilter('favorites', this)">★ Favorites<span class="pill-count" id="pill-count-favorites"></span></button>
           </div>
-          <div class="search-input-wrap">
-            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input type="text" id="search-input" class="search-input" placeholder="Search..." oninput="onSearchInput(this.value)" />
+          <div class="controls-action-group">
+            <div class="search-input-wrap">
+              <svg class="search-icon" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="search" id="search-input" class="search-input" placeholder="Search articles…" aria-label="Search articles" autocomplete="off" spellcheck="false" oninput="onSearchInput(this.value)" />
+            </div>
+            <button id="btn-sort" class="btn btn-ghost btn-sm sort-btn" onclick="toggleSort()" title="Toggle sort order" aria-label="Toggle sort order">
+              <svg id="sort-icon-desc" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <polyline points="19 12 12 19 5 12" />
+              </svg>
+              <svg id="sort-icon-asc" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                <line x1="12" y1="19" x2="12" y2="5" />
+                <polyline points="5 12 12 5 19 12" />
+              </svg>
+              <span id="sort-label">Latest</span>
+            </button>
           </div>
-          <button id="btn-sort" class="btn btn-ghost btn-sm sort-btn" onclick="toggleSort()" title="Toggle sort order">
-            <svg id="sort-icon-desc" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <polyline points="19 12 12 19 5 12" />
-            </svg>
-            <svg id="sort-icon-asc" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" style="display:none">
-              <line x1="12" y1="19" x2="12" y2="5" />
-              <polyline points="5 12 12 5 19 12" />
-            </svg>
-            <span id="sort-label">Latest</span>
-          </button>
         </div>
       </div>
 
